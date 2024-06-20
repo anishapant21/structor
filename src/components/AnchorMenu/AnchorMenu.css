@@ -39,6 +39,13 @@
 .anchor-menu__item--selected {
     box-shadow: 0 0 0 4px var(--primary-2);
 }
+
+.selectedHighlight{
+    .rst__rowContents{
+        background-color: #e9b8bf !important;
+  
+      }  
+}
 .anchor-menu__item:hover .item-button {
     visibility: visible;
 }

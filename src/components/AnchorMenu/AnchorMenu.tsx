@@ -18,6 +18,7 @@ import '@nosferatu500/react-sortable-tree/style.css';
 import { isIgnorableItem } from '../../helpers/itemControl';
 import { generateItemButtons } from './ItemButtons/ItemButtons';
 import { canTypeHaveChildren, getInitialItemConfig } from '../../helpers/questionTypeFeatures';
+import { TreeItem, getNodeAtPath } from '@nosferatu500/react-sortable-tree';
 
 interface AnchorMenuProps {
     qOrder: OrderItem[];
@@ -28,6 +29,7 @@ interface AnchorMenuProps {
 }
 
 interface Node {
+    linkId? : number,
     title: string;
     hierarchy?: string;
     nodeType?: IQuestionnaireItemType;
@@ -38,6 +40,7 @@ interface Node {
 interface ExtendedNode {
     node: Node;
     path: string[];
+    treeIndex? : number;
 }
 
 interface NodeMoveEvent {
@@ -47,6 +50,11 @@ interface NodeMoveEvent {
     nextPath: string[];
     prevPath: string[];
 }
+
+interface TreeNodeKeyParams {
+    treeIndex: number;
+    // Add other properties if needed, e.g., node: TreeNode;
+  }
 
 interface NodeVisibilityToggleEvent {
     node: Node;
@@ -84,7 +92,10 @@ const YourExternalNodeComponent = DragSource(
 
 const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     const { t } = useTranslation();
+    
     const [collapsedNodes, setCollapsedNodes] = React.useState<string[]>([]);
+    const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node, path: string[] }[]>([]);
+    const [firstSelectedIndex, setFirstSelectedIndex] = React.useState<number | null>(null);
 
     const mapToTreeData = (item: OrderItem[], hierarchy: string, parentLinkId?: string): Node[] => {
         return item
@@ -103,6 +114,59 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
             });
     };
 
+    const orderTreeData = mapToTreeData(props.qOrder, '');
+
+    const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode : ExtendedNode) => {
+        const {path, treeIndex} = extendedNode
+
+        if (event.shiftKey && firstSelectedIndex !== null && treeIndex !=undefined) {
+            // Select range of nodes between firstSelectedIndex and treeIndex
+            let startIndex = Math.min(firstSelectedIndex, treeIndex);
+            let endIndex = Math.max(firstSelectedIndex, treeIndex);
+        
+            // handle cases for reverse mode - firstSelectedIndex is the first one and treeIndex is the second one
+            if (firstSelectedIndex > treeIndex) {
+              startIndex = startIndex - 1;
+              endIndex = endIndex - 1
+            }
+           
+            const newSelectedNodes: { node: Node; path: string[]; }[] = [];
+            for (let i = startIndex + 1; i <= endIndex; i++) {
+            const result = getNodeAtPath({
+                treeData: orderTreeData,
+                path: [i],
+                getNodeKey: ({ treeIndex }: TreeNodeKeyParams) => treeIndex,
+              });
+      
+              if (result && result.node) {
+                const nodeExists = selectedNodes.some(
+                  (item) => item.node.title === result.node.title
+                );
+      
+                if (!nodeExists) {
+                  newSelectedNodes.push({ node: result.node as Node, path: [result.treeIndex] as string[] });
+                }
+              }
+            }
+            setSelectedNodes((prev) => [...prev, ...newSelectedNodes]);
+          } else {
+            setSelectedNodes((prev) => {
+                const nodeExists = prev.some(
+                (item) => item.node.title === node.title
+                );
+                if (nodeExists) {
+                return prev.filter((item) => item.node.title !== node.title);
+                } else {
+                return [...prev, { node, path }];
+                }
+            });
+          }
+   
+        if(treeIndex !=null){
+            setFirstSelectedIndex(treeIndex);
+        }
+      };
+
     const getNodeKey = (extendedNode: ExtendedNode): string => {
         return extendedNode.node.title;
     };
@@ -120,6 +184,11 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     const isSelectedItem = (linkId: string): boolean => {
         return props.qCurrentItem?.linkId === linkId;
     };
+
+    const isNodeHighlighted = (node: any) => {
+        return selectedNodes.some(
+          (item) => item.node.title === node.title);
+      }
 
     const getRelevantIcon = (type?: string) => {
         switch (type) {
@@ -145,7 +214,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
         );
     };
 
-    const orderTreeData = mapToTreeData(props.qOrder, '');
+  
     return (
         <DndProvider backend={HTML5Backend}>
             <div className="questionnaire-overview">
@@ -209,10 +278,25 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                         return item ? canTypeHaveChildren(item) : false;
                     }}
                     generateNodeProps={(extendedNode: ExtendedNode) => ({
+                        onClick: (event: React.MouseEvent) => {
+                            event.stopPropagation();
+                            const target = event.target as HTMLElement;
+                            const clickedItemClassName = target.className;
+            
+                            if (
+                              clickedItemClassName !== 'rstcustom__expandButton' &&
+                              clickedItemClassName !== 'rst__collapseButton'
+                            ) {
+            
+                              handleOnNodeClick(event, extendedNode.node, extendedNode)
+                            }
+            
+                          },
                         className: `anchor-menu__item 
                             ${hasValidationError(extendedNode.node.title) ? 'validation-error' : ''} 
                             ${extendedNode.path.length === 1 ? 'anchor-menu__topitem' : ''} 
-                            ${isSelectedItem(extendedNode.node.title) ? 'anchor-menu__item--selected' : ''}
+                            ${isNodeHighlighted(extendedNode.node) ? "selectedHighlight" : ""}
+                            ${isSelectedItem(extendedNode.node.title) ? 'anchor-menu__item--selected' : ''} 
                         `,
                         title: (
                             <span
