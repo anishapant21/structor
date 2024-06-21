@@ -52,10 +52,6 @@ interface NodeMoveEvent {
     prevPath: string[];
 }
 
-interface TreeNodeKeyParams {
-    treeIndex: number;
-  }
-
 interface NodeVisibilityToggleEvent {
     node: Node;
     expanded: boolean;
@@ -295,56 +291,4 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
 };
 
 export default AnchorMenu;
-function newFunction(firstSelectedIndex: number | null, orderTreeData: Node[], selectedNodes: { node: Node; path: string[]; }[], setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node; path: string[]; }[]>>, setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>) {
-    return (event: React.MouseEvent, node: Node, extendedNode: ExtendedNode) => {
-        const { path, treeIndex } = extendedNode;
-
-        if (event.shiftKey && firstSelectedIndex !== null && treeIndex != undefined) {
-            // Select range of nodes between firstSelectedIndex and treeIndex
-            let startIndex = Math.min(firstSelectedIndex, treeIndex);
-            let endIndex = Math.max(firstSelectedIndex, treeIndex);
-
-            // handle cases for reverse mode - firstSelectedIndex is the first one and treeIndex is the second one
-            if (firstSelectedIndex > treeIndex) {
-                startIndex = startIndex - 1;
-                endIndex = endIndex - 1;
-            }
-
-            const newSelectedNodes: { node: Node; path: string[]; }[] = [];
-            for (let i = startIndex + 1; i <= endIndex; i++) {
-                const result = getNodeAtPath({
-                    treeData: orderTreeData,
-                    path: [i],
-                    getNodeKey: ({ treeIndex }: TreeNodeKeyParams) => treeIndex,
-                });
-
-                if (result && result.node) {
-                    const nodeExists = selectedNodes.some(
-                        (item) => item.node.title === result.node.title
-                    );
-
-                    if (!nodeExists) {
-                        newSelectedNodes.push({ node: result.node as Node, path: [result.treeIndex] as string[] });
-                    }
-                }
-            }
-            setSelectedNodes((prev) => [...prev, ...newSelectedNodes]);
-        } else {
-            setSelectedNodes((prev) => {
-                const nodeExists = prev.some(
-                    (item) => item.node.title === node.title
-                );
-                if (nodeExists) {
-                    return prev.filter((item) => item.node.title !== node.title);
-                } else {
-                    return [...prev, { node, path }];
-                }
-            });
-        }
-
-        if (treeIndex != null) {
-            setFirstSelectedIndex(treeIndex);
-        }
-    };
-}
 
