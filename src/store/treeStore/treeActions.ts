@@ -33,6 +33,7 @@ export const UPDATE_ITEM_TRANSLATION_ACTION = 'updateItemTranslation';
 export const UPDATE_ITEM_OPTION_TRANSLATION_ACTION = 'updateItemOptionTranslation';
 export const UPDATE_METADATA_TRANSLATION_ACTION = 'updateMetadataTranslation';
 export const UPDATE_SETTING_TRANSLATION_ACTION = 'updateSettingTranslation';
+export const SELECT_MULTIPLE_NODES_ACTION = 'selectMultipleNodes'
 export const UPDATE_CONTAINED_VALUESET_TRANSLATION_ACTION = 'updateContainedValueSetTranslation';
 export const UPDATE_SIDEBAR_TRANSLATION_ACTION = 'updateSidebarTranslation';
 export const UPDATE_QUESTIONNAIRE_METADATA_ACTION = 'updateQuestionnaireMetadata';
@@ -64,6 +65,21 @@ type ItemValueType =
     | QuestionnaireItemInitial[]
     | Coding[]
     | undefined; // TODO: legg på alle lovlige verdier
+
+export interface Node {
+    linkId? : number,
+    title: string;
+    hierarchy?: string;
+    nodeType?: IQuestionnaireItemType;
+    nodeReadableType?: string;
+    children: Node[];
+}
+    
+export interface ExtendedNode {
+    node: Node;
+    path: string[];
+    treeIndex? : number;
+}
 
 export interface AddItemCodeAction {
     type: typeof ADD_ITEM_CODE_ACTION;
@@ -129,6 +145,18 @@ export interface UpdateSettingTranslationAction {
     languageCode: string;
     extension: IExtentionType;
     translatedValue: Extension | null;
+}
+
+export interface selectMultipleNodesAction {
+    type: typeof SELECT_MULTIPLE_NODES_ACTION;
+    firstSelectedIndex: number | null;
+    orderTreeData: Node[];
+    selectedNodes: { node: Node; path: string[]; }[];
+    event: React.MouseEvent,
+    node: Node,
+    extendedNode : ExtendedNode
+    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node; path: string[]; }[]>>;
+    setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
 export interface UpdateContainedValueSetTranslationAction {
@@ -343,6 +371,20 @@ export const updateSettingTranslationAction = (
         translatedValue,
     };
 };
+
+export const selectMultipleNodesAction = (firstSelectedIndex: number | null, orderTreeData: Node[], selectedNodes: { node: Node; path: string[]; }[], event: React.MouseEvent, node: Node, extendedNode : ExtendedNode, setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node; path: string[]; }[]>>, setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>) : selectMultipleNodesAction =>{
+    return {
+        type : SELECT_MULTIPLE_NODES_ACTION,
+        firstSelectedIndex,
+        orderTreeData,
+        selectedNodes,
+        event,
+        node,
+        extendedNode,
+        setSelectedNodes,
+        setFirstSelectedIndex,
+    }
+}
 
 export const updateContainedValueSetTranslationAction = (
     languageCode: string,

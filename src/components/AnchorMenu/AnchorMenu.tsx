@@ -2,14 +2,15 @@ import './AnchorMenu.css';
 import { DndProvider, DragSource, DragSourceConnector, ConnectDragSource } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionType, Items, MarkedItem, OrderItem } from '../../store/treeStore/treeStore';
+import { ActionType, Items, MarkedItem, OrderItem, TreeContext } from '../../store/treeStore/treeStore';
 import { IQuestionnaireItemType } from '../../types/IQuestionnareItemType';
 import {
     moveItemAction,
     newItemAction,
     reorderItemAction,
+    selectMultipleNodesAction,
     updateMarkedLinkIdAction,
 } from '../../store/treeStore/treeActions';
 import { ValidationErrors } from '../../helpers/orphanValidation';
@@ -53,7 +54,6 @@ interface NodeMoveEvent {
 
 interface TreeNodeKeyParams {
     treeIndex: number;
-    // Add other properties if needed, e.g., node: TreeNode;
   }
 
 interface NodeVisibilityToggleEvent {
@@ -92,6 +92,7 @@ const YourExternalNodeComponent = DragSource(
 
 const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     const { t } = useTranslation();
+    const { state, dispatch } = useContext(TreeContext);
     
     const [collapsedNodes, setCollapsedNodes] = React.useState<string[]>([]);
     const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node, path: string[] }[]>([]);
@@ -116,56 +117,10 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
 
     const orderTreeData = mapToTreeData(props.qOrder, '');
 
-    const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode : ExtendedNode) => {
-        const {path, treeIndex} = extendedNode
-
-        if (event.shiftKey && firstSelectedIndex !== null && treeIndex !=undefined) {
-            // Select range of nodes between firstSelectedIndex and treeIndex
-            let startIndex = Math.min(firstSelectedIndex, treeIndex);
-            let endIndex = Math.max(firstSelectedIndex, treeIndex);
-        
-            // handle cases for reverse mode - firstSelectedIndex is the first one and treeIndex is the second one
-            if (firstSelectedIndex > treeIndex) {
-              startIndex = startIndex - 1;
-              endIndex = endIndex - 1
-            }
-           
-            const newSelectedNodes: { node: Node; path: string[]; }[] = [];
-            for (let i = startIndex + 1; i <= endIndex; i++) {
-            const result = getNodeAtPath({
-                treeData: orderTreeData,
-                path: [i],
-                getNodeKey: ({ treeIndex }: TreeNodeKeyParams) => treeIndex,
-              });
-      
-              if (result && result.node) {
-                const nodeExists = selectedNodes.some(
-                  (item) => item.node.title === result.node.title
-                );
-      
-                if (!nodeExists) {
-                  newSelectedNodes.push({ node: result.node as Node, path: [result.treeIndex] as string[] });
-                }
-              }
-            }
-            setSelectedNodes((prev) => [...prev, ...newSelectedNodes]);
-          } else {
-            setSelectedNodes((prev) => {
-                const nodeExists = prev.some(
-                (item) => item.node.title === node.title
-                );
-                if (nodeExists) {
-                return prev.filter((item) => item.node.title !== node.title);
-                } else {
-                return [...prev, { node, path }];
-                }
-            });
-          }
-   
-        if(treeIndex !=null){
-            setFirstSelectedIndex(treeIndex);
-        }
-      };
+    const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode : ExtendedNode) =>{
+        dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex))
+    } 
+    // newFunction(firstSelectedIndex, orderTreeData, selectedNodes, setSelectedNodes, setFirstSelectedIndex);
 
     const getNodeKey = (extendedNode: ExtendedNode): string => {
         return extendedNode.node.title;
@@ -340,3 +295,56 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
 };
 
 export default AnchorMenu;
+function newFunction(firstSelectedIndex: number | null, orderTreeData: Node[], selectedNodes: { node: Node; path: string[]; }[], setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node; path: string[]; }[]>>, setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>) {
+    return (event: React.MouseEvent, node: Node, extendedNode: ExtendedNode) => {
+        const { path, treeIndex } = extendedNode;
+
+        if (event.shiftKey && firstSelectedIndex !== null && treeIndex != undefined) {
+            // Select range of nodes between firstSelectedIndex and treeIndex
+            let startIndex = Math.min(firstSelectedIndex, treeIndex);
+            let endIndex = Math.max(firstSelectedIndex, treeIndex);
+
+            // handle cases for reverse mode - firstSelectedIndex is the first one and treeIndex is the second one
+            if (firstSelectedIndex > treeIndex) {
+                startIndex = startIndex - 1;
+                endIndex = endIndex - 1;
+            }
+
+            const newSelectedNodes: { node: Node; path: string[]; }[] = [];
+            for (let i = startIndex + 1; i <= endIndex; i++) {
+                const result = getNodeAtPath({
+                    treeData: orderTreeData,
+                    path: [i],
+                    getNodeKey: ({ treeIndex }: TreeNodeKeyParams) => treeIndex,
+                });
+
+                if (result && result.node) {
+                    const nodeExists = selectedNodes.some(
+                        (item) => item.node.title === result.node.title
+                    );
+
+                    if (!nodeExists) {
+                        newSelectedNodes.push({ node: result.node as Node, path: [result.treeIndex] as string[] });
+                    }
+                }
+            }
+            setSelectedNodes((prev) => [...prev, ...newSelectedNodes]);
+        } else {
+            setSelectedNodes((prev) => {
+                const nodeExists = prev.some(
+                    (item) => item.node.title === node.title
+                );
+                if (nodeExists) {
+                    return prev.filter((item) => item.node.title !== node.title);
+                } else {
+                    return [...prev, { node, path }];
+                }
+            });
+        }
+
+        if (treeIndex != null) {
+            setFirstSelectedIndex(treeIndex);
+        }
+    };
+}
+
