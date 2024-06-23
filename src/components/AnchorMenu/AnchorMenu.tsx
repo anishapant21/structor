@@ -1,8 +1,9 @@
 import './AnchorMenu.css';
 import { DndProvider, DragSource, DragSourceConnector, ConnectDragSource } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { TreeItem, getNodeAtPath } from '@nosferatu500/react-sortable-tree';
 
-import React, { useContext } from 'react';
+import React, { ReactNode, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionType, Items, MarkedItem, OrderItem, TreeContext } from '../../store/treeStore/treeStore';
 import { IQuestionnaireItemType } from '../../types/IQuestionnareItemType';
@@ -19,7 +20,9 @@ import '@nosferatu500/react-sortable-tree/style.css';
 import { isIgnorableItem } from '../../helpers/itemControl';
 import { generateItemButtons } from './ItemButtons/ItemButtons';
 import { canTypeHaveChildren, getInitialItemConfig } from '../../helpers/questionTypeFeatures';
-import { TreeItem, getNodeAtPath } from '@nosferatu500/react-sortable-tree';
+import { GetTreeItemChildrenFn } from 'react-sortable-tree';
+import { calculatePositionChange } from '../../utils/multiSelectHelpers';
+
 
 interface AnchorMenuProps {
     qOrder: OrderItem[];
@@ -50,6 +53,7 @@ interface NodeMoveEvent {
     node: Node;
     nextPath: string[];
     prevPath: string[];
+    nextTreeIndex : number;
 }
 
 interface NodeVisibilityToggleEvent {
@@ -59,6 +63,15 @@ interface NodeVisibilityToggleEvent {
 
 const newNodeLinkId = 'NEW';
 const externalNodeType = 'yourNodeType';
+
+export interface TreeItem {
+    title?: ReactNode | undefined;
+    subtitle?: ReactNode | undefined;
+    expanded?: boolean | undefined;
+    children?: TreeItem[] | GetTreeItemChildrenFn | undefined;
+    [x: string]: any;
+}
+
 
 const externalNodeSpec = {
     // This needs to return an object with a property `node` in it.
@@ -110,6 +123,37 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                 };
             });
     };
+
+
+
+
+    const handleMultipleMove = (node: Node, treeData: TreeItem[], nextTreeIndex: number, nextPath: string[]) => {
+        // let newTreeData = [...orderTreeData];
+    
+        // positionDifference is to check weather the items is being dropped from top to bottom or bottom to top
+        // It affects the treeData and items paths
+        const positionDifference = calculatePositionChange(orderTreeData, treeData, node)
+        const insertAt = positionDifference && positionDifference > 0 ? nextTreeIndex + 1 : nextTreeIndex
+        console.log(insertAt)
+    
+        // If top to bottom first insertion and deletion and vice-versa
+        if (positionDifference && positionDifference > 0) {
+            // console.log("new tree data", newTreeData)
+            console.log("selectednodes", selectedNodes)
+            // console.log("insert at", newTreeData)
+            console.log("next path", nextPath)
+        //   newTreeData = multiNodeInsertion(newTreeData, selectedNodes, insertAt, nextPath)
+        //   newTreeData = multiNodeDeletion(newTreeData, selectedNodes)
+        } else {
+        //   newTreeData = multiNodeDeletion(newTreeData, selectedNodes)
+        //   newTreeData = multiNodeInsertion(newTreeData, selectedNodes, insertAt, nextPath)
+        }
+    
+        // setTreeData(newTreeData);
+        // setUpdatedTreeData(newTreeData)
+        // setSelectedNodes([])
+        console.log("nothing should be changed")
+      };
 
     const orderTreeData = mapToTreeData(props.qOrder, '');
 
@@ -192,30 +236,34 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                         /* dummy */
                     }}
                     getNodeKey={getNodeKey}
-                    onMoveNode={({ treeData, nextParentNode, node, nextPath, prevPath }: NodeMoveEvent) => {
+                    onMoveNode={({ treeData, nextParentNode, node, nextPath, prevPath, nextTreeIndex }: NodeMoveEvent) => {
                         const newPath = treePathToOrderArray(nextPath);
                         // find parent node:
                         const moveIndex = nextParentNode
                             ? nextParentNode.children.findIndex((x: Node) => x.title === node.title)
                             : treeData.findIndex((x: Node) => x.title === node.title);
 
-                        if (node.title === newNodeLinkId && node.nodeType) {
-                            props.dispatch(
-                                newItemAction(
-                                    getInitialItemConfig(node.nodeType, t('Recipient component')),
-                                    newPath,
-                                    moveIndex,
-                                ),
-                            );
+                        if (selectedNodes.length > 1) {
+                            handleMultipleMove(node, treeData, nextTreeIndex, nextPath)
                         } else {
-                            const oldPath = treePathToOrderArray(prevPath);
-                            // reorder within same parent
-                            if (JSON.stringify(newPath) === JSON.stringify(oldPath)) {
-                                props.dispatch(reorderItemAction(node.title, newPath, moveIndex));
+                            if (node.title === newNodeLinkId && node.nodeType) {
+                                props.dispatch(
+                                    newItemAction(
+                                        getInitialItemConfig(node.nodeType, t('Recipient component')),
+                                        newPath,
+                                        moveIndex,
+                                    ),
+                                );
                             } else {
-                                props.dispatch(moveItemAction(node.title, newPath, oldPath, moveIndex));
+                                const oldPath = treePathToOrderArray(prevPath);
+                                // reorder within same parent
+                                if (JSON.stringify(newPath) === JSON.stringify(oldPath)) {
+                                    props.dispatch(reorderItemAction(node.title, newPath, moveIndex));
+                                } else {
+                                    props.dispatch(moveItemAction(node.title, newPath, oldPath, moveIndex));
+                                }
                             }
-                        }
+                        }          
                     }}
                     onVisibilityToggle={({ node, expanded }: NodeVisibilityToggleEvent) => {
                         const filteredNodes = collapsedNodes.filter((x) => x !== node.title);
