@@ -691,7 +691,7 @@ function removeAttributeFromItem(draft: TreeState, action: RemoveItemAttributeAc
 function selectMultipleNodes(draft: any , action: selectMultipleNodesAction) : void{
     const {event, firstSelectedIndex, selectedNodes, setSelectedNodes, setFirstSelectedIndex, extendedNode, orderTreeData, node} = action;
 
-    const { path, treeIndex } = extendedNode;
+    const { treeIndex } = extendedNode;
 
         if (event.shiftKey && firstSelectedIndex !== null && treeIndex != undefined) {
             // Select range of nodes between firstSelectedIndex and treeIndex
@@ -704,7 +704,7 @@ function selectMultipleNodes(draft: any , action: selectMultipleNodesAction) : v
                 endIndex = endIndex - 1;
             }
 
-            const newSelectedNodes: { node: Node; path: string[]; }[] = [];
+            const newSelectedNodes: { node: Node; path: number; }[] = [];
             for (let i = startIndex + 1; i <= endIndex; i++) {
                 const result = getNodeAtPath({
                     treeData: orderTreeData,
@@ -718,12 +718,13 @@ function selectMultipleNodes(draft: any , action: selectMultipleNodesAction) : v
                     );
 
                     if (!nodeExists) {
-                        newSelectedNodes.push({ node: result.node as Node, path: [result.treeIndex] as string[] });
+                        newSelectedNodes.push({ node: result.node as Node, path: result.treeIndex });
                     }
                 }
             }
             setSelectedNodes((prev) => [...prev, ...newSelectedNodes]);
         } else {
+            const updatedPath = treeIndex && treeIndex
             setSelectedNodes((prev) => {
                 const nodeExists = prev.some(
                     (item) => item.node.title === node.title
@@ -731,7 +732,7 @@ function selectMultipleNodes(draft: any , action: selectMultipleNodesAction) : v
                 if (nodeExists) {
                     return prev.filter((item) => item.node.title !== node.title);
                 } else {
-                    return [...prev, { node, path }];
+                    return [...prev, { node, path: updatedPath as number }];
                 }
             });
         }

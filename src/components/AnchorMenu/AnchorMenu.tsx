@@ -21,7 +21,7 @@ import { isIgnorableItem } from '../../helpers/itemControl';
 import { generateItemButtons } from './ItemButtons/ItemButtons';
 import { canTypeHaveChildren, getInitialItemConfig } from '../../helpers/questionTypeFeatures';
 import { GetTreeItemChildrenFn } from 'react-sortable-tree';
-import { calculatePositionChange } from '../../utils/multiSelectHelpers';
+import { TreeItems, calculatePositionChange, multiNodeDeletion, multiNodeInsertion } from '../../utils/multiSelectHelpers';
 
 
 interface AnchorMenuProps {
@@ -104,7 +104,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     const { state, dispatch } = useContext(TreeContext);
     
     const [collapsedNodes, setCollapsedNodes] = React.useState<string[]>([]);
-    const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node, path: string[] }[]>([]);
+    const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node, path: number }[]>([]);
     const [firstSelectedIndex, setFirstSelectedIndex] = React.useState<number | null>(null);
 
     const mapToTreeData = (item: OrderItem[], hierarchy: string, parentLinkId?: string): Node[] => {
@@ -124,35 +124,26 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
             });
     };
 
-
-
-
-    const handleMultipleMove = (node: Node, treeData: TreeItem[], nextTreeIndex: number, nextPath: string[]) => {
-        // let newTreeData = [...orderTreeData];
+    const handleMultipleMove = (node: Node, treeData: TreeItems[], nextTreeIndex: number, nextPath: string[]) => {
+        let newTreeData = [...orderTreeData];
     
         // positionDifference is to check weather the items is being dropped from top to bottom or bottom to top
         // It affects the treeData and items paths
         const positionDifference = calculatePositionChange(orderTreeData, treeData, node)
         const insertAt = positionDifference && positionDifference > 0 ? nextTreeIndex + 1 : nextTreeIndex
-        console.log(insertAt)
     
         // If top to bottom first insertion and deletion and vice-versa
         if (positionDifference && positionDifference > 0) {
-            // console.log("new tree data", newTreeData)
-            console.log("selectednodes", selectedNodes)
-            // console.log("insert at", newTreeData)
-            console.log("next path", nextPath)
-        //   newTreeData = multiNodeInsertion(newTreeData, selectedNodes, insertAt, nextPath)
-        //   newTreeData = multiNodeDeletion(newTreeData, selectedNodes)
+          newTreeData = multiNodeInsertion(newTreeData, selectedNodes, insertAt, nextPath)
+          newTreeData = multiNodeDeletion(newTreeData, selectedNodes)
         } else {
-        //   newTreeData = multiNodeDeletion(newTreeData, selectedNodes)
-        //   newTreeData = multiNodeInsertion(newTreeData, selectedNodes, insertAt, nextPath)
+          newTreeData = multiNodeDeletion(newTreeData, selectedNodes)
+          newTreeData = multiNodeInsertion(newTreeData, selectedNodes, insertAt, nextPath)
         }
     
         // setTreeData(newTreeData);
         // setUpdatedTreeData(newTreeData)
         // setSelectedNodes([])
-        console.log("nothing should be changed")
       };
 
     const orderTreeData = mapToTreeData(props.qOrder, '');
@@ -160,7 +151,6 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode : ExtendedNode) =>{
         dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex))
     } 
-    // newFunction(firstSelectedIndex, orderTreeData, selectedNodes, setSelectedNodes, setFirstSelectedIndex);
 
     const getNodeKey = (extendedNode: ExtendedNode): string => {
         return extendedNode.node.title;
