@@ -2,14 +2,15 @@ import './AnchorMenu.css';
 import { DndProvider, DragSource, DragSourceConnector, ConnectDragSource } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionType, Items, MarkedItem, OrderItem } from '../../store/treeStore/treeStore';
+import { ActionType, Items, MarkedItem, OrderItem, TreeContext } from '../../store/treeStore/treeStore';
 import { IQuestionnaireItemType } from '../../types/IQuestionnareItemType';
 import {
     moveItemAction,
     newItemAction,
     reorderItemAction,
+    selectMultipleNodesAction,
     updateMarkedLinkIdAction,
 } from '../../store/treeStore/treeActions';
 import { ValidationErrors } from '../../helpers/orphanValidation';
@@ -84,7 +85,15 @@ const YourExternalNodeComponent = DragSource(
 
 const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     const { t } = useTranslation();
+    const { dispatch } = useContext(TreeContext);
     const [collapsedNodes, setCollapsedNodes] = React.useState<string[]>([]);
+    const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node}[]>([]);
+    
+    const [firstSelectedIndex, setFirstSelectedIndex] = React.useState<number | null>(null);
+
+    const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode : ExtendedNode) =>{
+        dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex))
+    } 
 
     const mapToTreeData = (item: OrderItem[], hierarchy: string, parentLinkId?: string): Node[] => {
         return item
@@ -120,6 +129,11 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     const isSelectedItem = (linkId: string): boolean => {
         return props.qCurrentItem?.linkId === linkId;
     };
+
+    const isNodeHighlighted = (node: any) => {
+        return selectedNodes.some(
+          (item) => item.node.title === node.title);
+      }
 
     const getRelevantIcon = (type?: string) => {
         switch (type) {
@@ -191,9 +205,22 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                             const oldPath = treePathToOrderArray(prevPath);
                             // reorder within same parent
                             if (JSON.stringify(newPath) === JSON.stringify(oldPath)) {
-                                props.dispatch(reorderItemAction(node.title, newPath, moveIndex));
+                                if(selectedNodes.length > 1 && selectedNodes.some(item => item.node.title === node.title)){
+                                    selectedNodes.map((item, i) =>{
+                                        props.dispatch(reorderItemAction(item.node.title, newPath, moveIndex+i));
+                                    })
+
+                                } else {
+                                    props.dispatch(reorderItemAction(node.title, newPath, moveIndex));
+                                }
                             } else {
-                                props.dispatch(moveItemAction(node.title, newPath, oldPath, moveIndex));
+                                if(selectedNodes.length > 1 && selectedNodes.some(item => item.node.title === node.title)){
+                                    selectedNodes.map((item, i) =>{
+                                        props.dispatch(moveItemAction(item.node.title, newPath, oldPath, moveIndex+i));
+                                    })
+                                } else {
+                                    props.dispatch(moveItemAction(node.title, newPath, oldPath, moveIndex));
+                                }
                             }
                         }
                     }}
@@ -209,9 +236,24 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                         return item ? canTypeHaveChildren(item) : false;
                     }}
                     generateNodeProps={(extendedNode: ExtendedNode) => ({
+                        onClick: (event: React.MouseEvent) => {
+                            event.stopPropagation();
+                            const target = event.target as HTMLElement;
+                            const clickedItemClassName = target.className;
+
+                            if (
+                              clickedItemClassName !== 'rstcustom__expandButton' &&
+                              clickedItemClassName !== 'rst__collapseButton'
+                            ) {
+
+                              handleOnNodeClick(event, extendedNode.node, extendedNode)
+                            }
+
+                          },
                         className: `anchor-menu__item 
                             ${hasValidationError(extendedNode.node.title) ? 'validation-error' : ''} 
                             ${extendedNode.path.length === 1 ? 'anchor-menu__topitem' : ''} 
+                            ${isNodeHighlighted(extendedNode.node) ? "selectedHighlight" : ""}
                             ${isSelectedItem(extendedNode.node.title) ? 'anchor-menu__item--selected' : ''}
                         `,
                         title: (

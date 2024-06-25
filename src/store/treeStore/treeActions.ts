@@ -51,6 +51,7 @@ export const UPDATE_MARKED_LINK_ID = 'updateMarkedLinkId';
 export const UPDATE_VALUESET_ACTION = 'UPDATE_VALUESET';
 export const IMPORT_VALUESET_ACTION = 'IMPORT_VALUESET';
 export const SAVE_ACTION = 'save';
+export const SELECT_MULTIPLE_NODES_ACTION = 'selectMultipleNodes'
 
 type ItemValueType =
     | string
@@ -64,6 +65,22 @@ type ItemValueType =
     | QuestionnaireItemInitial[]
     | Coding[]
     | undefined; // TODO: legg på alle lovlige verdier
+
+
+export interface Node {
+    linkId? : number,
+    title: string;
+    hierarchy?: string;
+    nodeType?: IQuestionnaireItemType;
+    nodeReadableType?: string;
+    children: Node[];
+}
+
+export interface ExtendedNode {
+    node: Node;
+    path: string[];
+    treeIndex? : number;
+}
 
 export interface AddItemCodeAction {
     type: typeof ADD_ITEM_CODE_ACTION;
@@ -122,6 +139,18 @@ export interface UpdateMetadataTranslationAction {
     languageCode: string;
     propertyName: string;
     translation: string;
+}
+
+export interface selectMultipleNodesAction {
+    type: typeof SELECT_MULTIPLE_NODES_ACTION;
+    firstSelectedIndex: number | null;
+    orderTreeData: Node[];
+    selectedNodes: { node: Node }[];
+    event: React.MouseEvent,
+    node: Node,
+    extendedNode : ExtendedNode
+    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node }[]>>;
+    setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
 export interface UpdateSettingTranslationAction {
@@ -343,6 +372,20 @@ export const updateSettingTranslationAction = (
         translatedValue,
     };
 };
+
+export const selectMultipleNodesAction = (firstSelectedIndex: number | null, orderTreeData: Node[], selectedNodes: { node: Node }[], event: React.MouseEvent, node: Node, extendedNode : ExtendedNode, setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node }[]>>, setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>) : selectMultipleNodesAction =>{
+    return {
+        type : SELECT_MULTIPLE_NODES_ACTION,
+        firstSelectedIndex,
+        orderTreeData,
+        selectedNodes,
+        event,
+        node,
+        extendedNode,
+        setSelectedNodes,
+        setFirstSelectedIndex,
+    }
+}
 
 export const updateContainedValueSetTranslationAction = (
     languageCode: string,

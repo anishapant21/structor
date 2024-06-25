@@ -43,6 +43,13 @@
     visibility: visible;
 }
 
+.selectedHighlight{
+    .rst__rowContents{
+        background-color: #e9b8bf !important;
+
+      }  
+}
+
 /* override styling */
 .anchor-menu__item .rst__rowLabel {
     flex: 1;

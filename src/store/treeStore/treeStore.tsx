@@ -55,10 +55,12 @@ import {
     UpdateValueSetAction,
     UPDATE_SETTING_TRANSLATION_ACTION,
     UpdateSettingTranslationAction,
+    selectMultipleNodesAction,
+    SELECT_MULTIPLE_NODES_ACTION,
 } from './treeActions';
 import { IQuestionnaireMetadata, IQuestionnaireMetadataType } from '../../types/IQuestionnaireMetadataType';
 import createUUID from '../../helpers/CreateUUID';
-import { IItemProperty } from '../../types/IQuestionnareItemType';
+import { IItemProperty, IQuestionnaireItemType } from '../../types/IQuestionnareItemType';
 import { INITIAL_LANGUAGE } from '../../helpers/LanguageHelper';
 import { isIgnorableItem } from '../../helpers/itemControl';
 import { createOptionReferenceExtensions } from '../../helpers/extensionHelper';
@@ -68,6 +70,7 @@ import { isRecipientList } from '../../helpers/QuestionHelper';
 import { IExtentionType } from '../../types/IQuestionnareItemType';
 import { createVisibilityCoding, VisibilityType } from '../../helpers/globalVisibilityHelper';
 import { tjenesteomraadeCode, getTjenesteomraadeCoding } from '../../helpers/MetadataHelper';
+import { TreeItem, getNodeAtPath } from '@nosferatu500/react-sortable-tree';
 
 export type ActionType =
     | AddItemCodeAction
@@ -95,7 +98,8 @@ export type ActionType =
     | UpdateValueSetAction
     | RemoveItemAttributeAction
     | SaveAction
-    | UpdateMarkedLinkId;
+    | UpdateMarkedLinkId 
+    | selectMultipleNodesAction;
 
 export interface Items {
     [linkId: string]: QuestionnaireItem;
@@ -164,6 +168,25 @@ export interface OrderItem {
 export interface MarkedItem {
     linkId: string;
     parentArray: Array<string>;
+}
+
+export interface TreeNodeKeyParams {
+    treeIndex: number;
+}
+
+export interface Node {
+    linkId? : number,
+    title: string;
+    hierarchy?: string;
+    nodeType?: IQuestionnaireItemType;
+    nodeReadableType?: string;
+    children: Node[];
+}
+
+export interface ExtendedNode {
+    node: Node;
+    path: string[];
+    treeIndex? : number;
 }
 
 export interface TreeState {
@@ -665,6 +688,60 @@ function removeAttributeFromItem(draft: TreeState, action: RemoveItemAttributeAc
     }
 }
 
+function selectMultipleNodes(draft: any , action: selectMultipleNodesAction) : void{
+    const {event, firstSelectedIndex, selectedNodes, setSelectedNodes, setFirstSelectedIndex, extendedNode, orderTreeData, node} = action;
+
+    const { treeIndex } = extendedNode;
+
+        if (event.shiftKey && firstSelectedIndex !== null && treeIndex != undefined) {
+            // Select range of nodes between firstSelectedIndex and treeIndex
+            let startIndex = Math.min(firstSelectedIndex, treeIndex);
+            let endIndex = Math.max(firstSelectedIndex, treeIndex);
+
+            // handle cases for reverse mode - firstSelectedIndex is the first one and treeIndex is the second one
+            if (firstSelectedIndex > treeIndex) {
+                startIndex = startIndex - 1;
+                endIndex = endIndex - 1;
+            }
+
+            const newSelectedNodes: { node: Node }[] = [];
+            for (let i = startIndex + 1; i <= endIndex; i++) {
+                const result = getNodeAtPath({
+                    treeData: orderTreeData,
+                    path: [i],
+                    getNodeKey: ({ treeIndex }: TreeNodeKeyParams) => treeIndex,
+                });
+
+                if (result && result.node) {
+                    const nodeExists = selectedNodes.some(
+                        (item) => item.node.title === result.node.title
+                    );
+
+                    if (!nodeExists) {
+                        newSelectedNodes.push({ node: result.node as Node });
+                    }
+                }
+            }
+            setSelectedNodes((prev) => [...prev, ...newSelectedNodes]);
+        } else {
+            const updatedPath = treeIndex && treeIndex
+            setSelectedNodes((prev) => {
+                const nodeExists = prev.some(
+                    (item) => item.node.title === node.title
+                );
+                if (nodeExists) {
+                    return prev.filter((item) => item.node.title !== node.title);
+                } else {
+                    return [...prev, { node, path: updatedPath as number }];
+                }
+            });
+        }
+
+        if (treeIndex != null) {
+            setFirstSelectedIndex(treeIndex);
+        }
+}
+
 const reducer = produce((draft: TreeState, action: ActionType) => {
     // Flag as dirty on all changes except reset, save and "scroll"
     if (
@@ -752,6 +829,9 @@ const reducer = produce((draft: TreeState, action: ActionType) => {
             break;
         case UPDATE_MARKED_LINK_ID:
             updateMarkedItemId(draft, action);
+            break;
+        case SELECT_MULTIPLE_NODES_ACTION:
+            selectMultipleNodes(draft, action);
             break;
     }
 });
