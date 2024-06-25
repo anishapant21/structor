@@ -124,28 +124,6 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
             });
     };
 
-    const handleMultipleMove = (node: Node, treeData: TreeItems[], nextTreeIndex: number, nextPath: string[]) => {
-        let newTreeData = [...orderTreeData];
-    
-        // positionDifference is to check weather the items is being dropped from top to bottom or bottom to top
-        // It affects the treeData and items paths
-        const positionDifference = calculatePositionChange(orderTreeData, treeData, node)
-        const insertAt = positionDifference && positionDifference > 0 ? nextTreeIndex + 1 : nextTreeIndex
-    
-        // If top to bottom first insertion and deletion and vice-versa
-        if (positionDifference && positionDifference > 0) {
-          newTreeData = multiNodeInsertion(newTreeData, selectedNodes, insertAt, nextPath)
-          newTreeData = multiNodeDeletion(newTreeData, selectedNodes)
-        } else {
-          newTreeData = multiNodeDeletion(newTreeData, selectedNodes)
-          newTreeData = multiNodeInsertion(newTreeData, selectedNodes, insertAt, nextPath)
-        }
-    
-        // setTreeData(newTreeData);
-        // setUpdatedTreeData(newTreeData)
-        // setSelectedNodes([])
-      };
-
     const orderTreeData = mapToTreeData(props.qOrder, '');
 
     const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode : ExtendedNode) =>{
@@ -233,9 +211,6 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                             ? nextParentNode.children.findIndex((x: Node) => x.title === node.title)
                             : treeData.findIndex((x: Node) => x.title === node.title);
 
-                        if (selectedNodes.length > 1) {
-                            handleMultipleMove(node, treeData, nextTreeIndex, nextPath)
-                        } else {
                             if (node.title === newNodeLinkId && node.nodeType) {
                                 props.dispatch(
                                     newItemAction(
@@ -248,12 +223,24 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                                 const oldPath = treePathToOrderArray(prevPath);
                                 // reorder within same parent
                                 if (JSON.stringify(newPath) === JSON.stringify(oldPath)) {
-                                    props.dispatch(reorderItemAction(node.title, newPath, moveIndex));
+                                    if(selectedNodes.length > 1 && selectedNodes.some(item => item.node.title === node.title)){
+                                        selectedNodes.map((item, i) =>{
+                                            props.dispatch(reorderItemAction(item.node.title, newPath, moveIndex+i));
+                                        })
+
+                                    } else {
+                                        props.dispatch(reorderItemAction(node.title, newPath, moveIndex));
+                                    }
                                 } else {
-                                    props.dispatch(moveItemAction(node.title, newPath, oldPath, moveIndex));
+                                    if(selectedNodes.length > 1 && selectedNodes.some(item => item.node.title === node.title)){
+                                        selectedNodes.map((item, i) =>{
+                                            props.dispatch(moveItemAction(item.node.title, newPath, oldPath, moveIndex+i));
+                                        })
+                                    } else {
+                                        props.dispatch(moveItemAction(node.title, newPath, oldPath, moveIndex));
+                                    }
                                 }
-                            }
-                        }          
+                            }       
                     }}
                     onVisibilityToggle={({ node, expanded }: NodeVisibilityToggleEvent) => {
                         const filteredNodes = collapsedNodes.filter((x) => x !== node.title);

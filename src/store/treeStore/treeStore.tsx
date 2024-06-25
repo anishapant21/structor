@@ -708,7 +708,7 @@ function selectMultipleNodes(draft: any , action: selectMultipleNodesAction) : v
             for (let i = startIndex + 1; i <= endIndex; i++) {
                 const result = getNodeAtPath({
                     treeData: orderTreeData,
-                    path: [i],
+                    path: [1, i],
                     getNodeKey: ({ treeIndex }: TreeNodeKeyParams) => treeIndex,
                 });
 
