@@ -14,6 +14,8 @@ import FormFillerPreview from '../components/Refero/FormFillerPreview';
 
 import './FormBuilder.css';
 import { IQuestionnaireItemType } from '../types/IQuestionnareItemType';
+import DeleteConfirmation from '../components/MultiSelect/DeleteConfirmation';
+import { deleteItemAction } from '../store/treeStore/treeActions';
 
 interface Node {
     title: string;
@@ -33,10 +35,15 @@ const FormBuilder = (): JSX.Element => {
     const [translateLang, setTranslateLang] = useState('');
 
     const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node }[]>([]);
+    const [isDeleteConfirmationModalVisible, setIsDeleteConfirmationModalVisible] = useState(false)
 
     const toggleFormDetails = useCallback(() => {
         setShowFormDetails(!showFormDetails);
     }, [showFormDetails]);
+
+    const handleOnMultipleDelete = () => {
+        console.log(selectedNodes)
+    }
 
     return (
         <>
@@ -52,7 +59,7 @@ const FormBuilder = (): JSX.Element => {
                     <i className="cross-icon" onClick={() => setSelectedNodes([])} />
                     <span className='items-selected'>{selectedNodes.length} selected</span>
                 </div>
-                <div className='delete-multiple p-2'>
+                <div className='delete-multiple p-2' onClick={() => setIsDeleteConfirmationModalVisible(true)}>
                     <i className="delete-icon" />
                     Delete</div>
             </div>}
@@ -96,6 +103,7 @@ const FormBuilder = (): JSX.Element => {
                     isOpen={showFormDetails}
                 />
                 <QuestionDrawer validationErrors={validationErrors} />
+                <DeleteConfirmation isVisible={isDeleteConfirmationModalVisible} setIsDeleteConfirmationModalVisible={setIsDeleteConfirmationModalVisible} handleOnMultipleDelete={handleOnMultipleDelete} />
             </div>
         </>
     );
