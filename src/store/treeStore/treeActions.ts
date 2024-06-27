@@ -143,14 +143,14 @@ export interface UpdateMetadataTranslationAction {
 
 export interface selectMultipleNodesAction {
     type: typeof SELECT_MULTIPLE_NODES_ACTION;
-    firstSelectedIndex: number | null;
+    firstSelectedIndex: number[] | null;
     orderTreeData: Node[];
     selectedNodes: { node: Node }[];
     event: React.MouseEvent,
     node: Node,
     extendedNode : ExtendedNode
     setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node }[]>>;
-    setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>;
+    setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number[] | []>>;
 }
 
 export interface UpdateSettingTranslationAction {
@@ -373,7 +373,7 @@ export const updateSettingTranslationAction = (
     };
 };
 
-export const selectMultipleNodesAction = (firstSelectedIndex: number | null, orderTreeData: Node[], selectedNodes: { node: Node }[], event: React.MouseEvent, node: Node, extendedNode : ExtendedNode, setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node }[]>>, setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>) : selectMultipleNodesAction =>{
+export const selectMultipleNodesAction = (firstSelectedIndex: number[] | null, orderTreeData: Node[], selectedNodes: { node: Node }[], event: React.MouseEvent, node: Node, extendedNode : ExtendedNode, setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node }[]>>, setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number[] | []>>) : selectMultipleNodesAction =>{
     return {
         type : SELECT_MULTIPLE_NODES_ACTION,
         firstSelectedIndex,

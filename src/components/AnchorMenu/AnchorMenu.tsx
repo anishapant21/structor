@@ -89,7 +89,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     const [collapsedNodes, setCollapsedNodes] = React.useState<string[]>([]);
     const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node}[]>([]);
     
-    const [firstSelectedIndex, setFirstSelectedIndex] = React.useState<number | null>(null);
+    const [firstSelectedIndex, setFirstSelectedIndex] = React.useState<number[] | []>([]);
 
     const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode : ExtendedNode) =>{
         dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex))

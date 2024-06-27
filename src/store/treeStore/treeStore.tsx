@@ -688,18 +688,54 @@ function removeAttributeFromItem(draft: TreeState, action: RemoveItemAttributeAc
     }
 }
 
+// Takes the node title (unique id) and orderedTreeData and returns path to that node
+const pathToChild = (index: string, list: Node[]): number[] => {
+    let visitedNode: number[] | null = null;
+    let globalIndex = -1;
+  
+    const getData = (child: Node[], path: number[]): number[] | null => {
+      for (let i = 0; i < child.length; i++) {
+        globalIndex++;
+        const currentPath = path.concat(globalIndex);
+  
+        // Check if the current object's title matches the id we're looking for
+        if (child[i].title === index) {
+          return currentPath.slice(-3); // Return last 3 elements
+        }
+  
+        // If the current object has children, recurse into the children
+        if (child[i].children && child[i].children.length > 0) {
+          const result = getData(child[i].children, currentPath);
+          if (result) {
+            return result;
+          }
+        }
+      }
+      return null;
+    };
+  
+    visitedNode = getData(list, []);
+    return visitedNode ? visitedNode : [];
+  };
+
+
 function selectMultipleNodes(draft: any , action: selectMultipleNodesAction) : void{
     const {event, firstSelectedIndex, selectedNodes, setSelectedNodes, setFirstSelectedIndex, extendedNode, orderTreeData, node} = action;
+
+    const pathToTheClickedNode = pathToChild(extendedNode.node.title, orderTreeData) 
 
     const { treeIndex } = extendedNode;
 
         if (event.shiftKey && firstSelectedIndex !== null && treeIndex != undefined) {
+
+            const parent = pathToTheClickedNode.slice(0, -1);
             // Select range of nodes between firstSelectedIndex and treeIndex
-            let startIndex = Math.min(firstSelectedIndex, treeIndex);
-            let endIndex = Math.max(firstSelectedIndex, treeIndex);
+            let startIndex = Math.min(firstSelectedIndex[firstSelectedIndex.length -1], pathToTheClickedNode[pathToTheClickedNode.length - 1]);
+            let endIndex = Math.max(firstSelectedIndex[firstSelectedIndex.length -1], pathToTheClickedNode[pathToTheClickedNode.length - 1]);
+
 
             // handle cases for reverse mode - firstSelectedIndex is the first one and treeIndex is the second one
-            if (firstSelectedIndex > treeIndex) {
+            if (firstSelectedIndex[firstSelectedIndex.length -1] > pathToTheClickedNode[pathToTheClickedNode.length - 1]) {
                 startIndex = startIndex - 1;
                 endIndex = endIndex - 1;
             }
@@ -708,7 +744,7 @@ function selectMultipleNodes(draft: any , action: selectMultipleNodesAction) : v
             for (let i = startIndex + 1; i <= endIndex; i++) {
                 const result = getNodeAtPath({
                     treeData: orderTreeData,
-                    path: [i],
+                    path: [...parent, i],
                     getNodeKey: ({ treeIndex }: TreeNodeKeyParams) => treeIndex,
                 });
 
@@ -737,8 +773,8 @@ function selectMultipleNodes(draft: any , action: selectMultipleNodesAction) : v
             });
         }
 
-        if (treeIndex != null) {
-            setFirstSelectedIndex(treeIndex);
+        if (pathToTheClickedNode) {
+            setFirstSelectedIndex(pathToTheClickedNode);
         }
 }
 
