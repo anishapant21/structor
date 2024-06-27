@@ -257,17 +257,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                             ${isSelectedItem(extendedNode.node.title) ? 'anchor-menu__item--selected' : ''}
                         `,
                         title: (
-                            <span
-                                className="anchor-menu__inneritem"
-                                onClick={() => {
-                                    props.dispatch(
-                                        updateMarkedLinkIdAction(
-                                            extendedNode.node.title,
-                                            treePathToOrderArray(extendedNode.path),
-                                        ),
-                                    );
-                                }}
-                            >
+                            <span>
                                 <span className={getRelevantIcon(props.qItems[extendedNode.node.title]?.type)} />
                                 <span className="anchor-menu__title">
                                     {extendedNode.node.hierarchy}

@@ -36,7 +36,15 @@ const FormBuilder = (): JSX.Element => {
                 translationErrors={translationErrors}
                 setTranslationErrors={setTranslationErrors}
             />
-
+            <div className={`header-wrapper ${true ? "" : "d-none"}`}>
+                <div className='title'>
+                    <i className="cross-icon" />
+                    <span className='items-selected'>5 selected</span>
+                </div>
+                <div className='delete-multiple p-2'>
+                    <i className="delete-icon" />
+                    Delete</div>
+            </div>
             <div className="editor">
                 <AnchorMenu
                     dispatch={dispatch}

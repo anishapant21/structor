@@ -5,7 +5,7 @@ import { ActionType } from '../../../store/treeStore/treeStore';
 import { QuestionnaireItem } from '../../../types/fhir';
 
 import './ItemButtons.css';
-import { deleteItemAction, duplicateItemAction } from '../../../store/treeStore/treeActions';
+import { deleteItemAction, duplicateItemAction, updateMarkedLinkIdAction } from '../../../store/treeStore/treeActions';
 
 export const generateItemButtons = (
     t: TFunction<'translation'>,
@@ -17,6 +17,7 @@ export const generateItemButtons = (
     if (!item) {
         return [];
     }
+
     const dispatchDeleteItem = (event: MouseEvent<HTMLButtonElement>): void => {
         event.stopPropagation();
         dispatch(deleteItemAction(item.linkId, parentArray));
@@ -27,11 +28,31 @@ export const generateItemButtons = (
         dispatch(duplicateItemAction(item.linkId, parentArray));
     };
 
+    const dispatchSettingsItem = (event: MouseEvent<HTMLButtonElement>): void => {
+        event.stopPropagation();
+        dispatch(
+            updateMarkedLinkIdAction(
+                item.linkId,
+                parentArray
+            ),
+        );
+    };
+
     const getClassNames = () => {
         return `item-button ${showLabel ? 'item-button--visible' : ''}`;
     };
 
     return [
+        <button
+            key="settings-item-button"
+            className={getClassNames()}
+            onClick={dispatchSettingsItem}
+            aria-label="Settings element"
+            title={t('Settings')}
+        >
+         <i className="settings-icon" />
+        {showLabel && <label>{t('Settings')}</label>}
+        </button>,
         <button
             key="duplicate-item-button"
             className={getClassNames()}
