@@ -13,6 +13,15 @@ import TranslationModal from '../components/Languages/Translation/TranslationMod
 import FormFillerPreview from '../components/Refero/FormFillerPreview';
 
 import './FormBuilder.css';
+import { IQuestionnaireItemType } from '../types/IQuestionnareItemType';
+
+interface Node {
+    title: string;
+    hierarchy?: string;
+    nodeType?: IQuestionnaireItemType;
+    nodeReadableType?: string;
+    children: Node[];
+}
 
 const FormBuilder = (): JSX.Element => {
     const { state, dispatch } = useContext(TreeContext);
@@ -22,6 +31,8 @@ const FormBuilder = (): JSX.Element => {
     const [validationErrors, setValidationErrors] = useState<Array<ValidationErrors>>([]);
     const [translationErrors, setTranslationErrors] = useState<Array<ValidationErrors>>([]);
     const [translateLang, setTranslateLang] = useState('');
+
+    const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node }[]>([]);
 
     const toggleFormDetails = useCallback(() => {
         setShowFormDetails(!showFormDetails);
@@ -36,15 +47,15 @@ const FormBuilder = (): JSX.Element => {
                 translationErrors={translationErrors}
                 setTranslationErrors={setTranslationErrors}
             />
-            <div className={`header-wrapper ${true ? "" : "d-none"}`}>
+            {selectedNodes.length > 0 && <div className={`header-wrapper ${true ? "" : "d-none"}`}>
                 <div className='title'>
-                    <i className="cross-icon" />
-                    <span className='items-selected'>5 selected</span>
+                    <i className="cross-icon" onClick={() => setSelectedNodes([])} />
+                    <span className='items-selected'>{selectedNodes.length} selected</span>
                 </div>
                 <div className='delete-multiple p-2'>
                     <i className="delete-icon" />
                     Delete</div>
-            </div>
+            </div>}
             <div className="editor">
                 <AnchorMenu
                     dispatch={dispatch}
@@ -52,6 +63,8 @@ const FormBuilder = (): JSX.Element => {
                     qItems={state.qItems}
                     qCurrentItem={state.qCurrentItem}
                     validationErrors={validationErrors}
+                    selectedNodes={selectedNodes}
+                    setSelectedNodes={setSelectedNodes}
                 />
                 {showPreview && (
                     <FormFillerPreview

@@ -153,4 +153,8 @@
             color: rgb(239, 16, 16);
         }
       }
+
+      .cross-icon{
+        cursor: pointer;
+      }
   }
