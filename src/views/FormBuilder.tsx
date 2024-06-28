@@ -34,15 +34,25 @@ const FormBuilder = (): JSX.Element => {
     const [translationErrors, setTranslationErrors] = useState<Array<ValidationErrors>>([]);
     const [translateLang, setTranslateLang] = useState('');
 
-    const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node }[]>([]);
+    const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node, path: Array<string> }[]>([]);
     const [isDeleteConfirmationModalVisible, setIsDeleteConfirmationModalVisible] = useState(false)
 
     const toggleFormDetails = useCallback(() => {
         setShowFormDetails(!showFormDetails);
     }, [showFormDetails]);
 
+    const treePathToOrderArray = (treePath: string[]): string[] => {
+        const newPath = [...treePath];
+        newPath.splice(-1);
+        return newPath;
+    };
+
     const handleOnMultipleDelete = () => {
-        console.log(selectedNodes)
+        selectedNodes.map((item) => {
+            dispatch(deleteItemAction(item.node.title, treePathToOrderArray(item.path)));
+        })
+        setSelectedNodes([])
+        setIsDeleteConfirmationModalVisible(false)
     }
 
     return (

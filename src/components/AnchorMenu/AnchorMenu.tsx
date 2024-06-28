@@ -34,8 +34,8 @@ interface AnchorMenuProps {
     qCurrentItem: MarkedItem | undefined;
     validationErrors: ValidationErrors[];
     dispatch: React.Dispatch<ActionType>;
-    selectedNodes: { node: Node }[];
-    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node }[]>>;
+    selectedNodes: { node: Node, path: Array<string> }[];
+    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node, path: Array<string> }[]>>;
 }
 
 interface ExtendedNode {
@@ -94,6 +94,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     const [firstSelectedIndex, setFirstSelectedIndex] = React.useState<number[] | []>([]);
 
     const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode: ExtendedNode) => {
+        console.log(extendedNode.path)
         dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex))
     }
 

@@ -98,7 +98,7 @@ export type ActionType =
     | UpdateValueSetAction
     | RemoveItemAttributeAction
     | SaveAction
-    | UpdateMarkedLinkId 
+    | UpdateMarkedLinkId
     | selectMultipleNodesAction;
 
 export interface Items {
@@ -175,7 +175,7 @@ export interface TreeNodeKeyParams {
 }
 
 export interface Node {
-    linkId? : number,
+    linkId?: number,
     title: string;
     hierarchy?: string;
     nodeType?: IQuestionnaireItemType;
@@ -186,7 +186,7 @@ export interface Node {
 export interface ExtendedNode {
     node: Node;
     path: string[];
-    treeIndex? : number;
+    treeIndex?: number;
 }
 
 export interface TreeState {
@@ -692,90 +692,90 @@ function removeAttributeFromItem(draft: TreeState, action: RemoveItemAttributeAc
 const pathToChild = (index: string, list: Node[]): number[] => {
     let visitedNode: number[] | null = null;
     let globalIndex = -1;
-  
+
     const getData = (child: Node[], path: number[]): number[] | null => {
-      for (let i = 0; i < child.length; i++) {
-        globalIndex++;
-        const currentPath = path.concat(globalIndex);
-  
-        // Check if the current object's title matches the id we're looking for
-        if (child[i].title === index) {
-          return currentPath.slice(-3); // Return last 3 elements
+        for (let i = 0; i < child.length; i++) {
+            globalIndex++;
+            const currentPath = path.concat(globalIndex);
+
+            // Check if the current object's title matches the id we're looking for
+            if (child[i].title === index) {
+                return currentPath.slice(-3); // Return last 3 elements
+            }
+
+            // If the current object has children, recurse into the children
+            if (child[i].children && child[i].children.length > 0) {
+                const result = getData(child[i].children, currentPath);
+                if (result) {
+                    return result;
+                }
+            }
         }
-  
-        // If the current object has children, recurse into the children
-        if (child[i].children && child[i].children.length > 0) {
-          const result = getData(child[i].children, currentPath);
-          if (result) {
-            return result;
-          }
-        }
-      }
-      return null;
+        return null;
     };
-  
+
     visitedNode = getData(list, []);
     return visitedNode ? visitedNode : [];
-  };
+};
 
 
-function selectMultipleNodes(draft: any , action: selectMultipleNodesAction) : void{
-    const {event, firstSelectedIndex, selectedNodes, setSelectedNodes, setFirstSelectedIndex, extendedNode, orderTreeData, node} = action;
+function selectMultipleNodes(draft: any, action: selectMultipleNodesAction): void {
+    const { event, firstSelectedIndex, selectedNodes, setSelectedNodes, setFirstSelectedIndex, extendedNode, orderTreeData, node } = action;
 
-    const pathToTheClickedNode = pathToChild(extendedNode.node.title, orderTreeData) 
+    const pathToTheClickedNode = pathToChild(extendedNode.node.title, orderTreeData)
 
     const { treeIndex } = extendedNode;
 
-        if (event.shiftKey && firstSelectedIndex !== null && treeIndex != undefined) {
+    if (event.shiftKey && firstSelectedIndex !== null && treeIndex != undefined) {
 
-            const parent = pathToTheClickedNode.slice(0, -1);
-            // Select range of nodes between firstSelectedIndex and treeIndex
-            let startIndex = Math.min(firstSelectedIndex[firstSelectedIndex.length -1], pathToTheClickedNode[pathToTheClickedNode.length - 1]);
-            let endIndex = Math.max(firstSelectedIndex[firstSelectedIndex.length -1], pathToTheClickedNode[pathToTheClickedNode.length - 1]);
+        const parent = pathToTheClickedNode.slice(0, -1);
+        // Select range of nodes between firstSelectedIndex and treeIndex
+        let startIndex = Math.min(firstSelectedIndex[firstSelectedIndex.length - 1], pathToTheClickedNode[pathToTheClickedNode.length - 1]);
+        let endIndex = Math.max(firstSelectedIndex[firstSelectedIndex.length - 1], pathToTheClickedNode[pathToTheClickedNode.length - 1]);
 
 
-            // handle cases for reverse mode - firstSelectedIndex is the first one and treeIndex is the second one
-            if (firstSelectedIndex[firstSelectedIndex.length -1] > pathToTheClickedNode[pathToTheClickedNode.length - 1]) {
-                startIndex = startIndex - 1;
-                endIndex = endIndex - 1;
-            }
+        // handle cases for reverse mode - firstSelectedIndex is the first one and treeIndex is the second one
+        if (firstSelectedIndex[firstSelectedIndex.length - 1] > pathToTheClickedNode[pathToTheClickedNode.length - 1]) {
+            startIndex = startIndex - 1;
+            endIndex = endIndex - 1;
+        }
 
-            const newSelectedNodes: { node: Node }[] = [];
-            for (let i = startIndex + 1; i <= endIndex; i++) {
-                const result = getNodeAtPath({
-                    treeData: orderTreeData,
-                    path: [...parent, i],
-                    getNodeKey: ({ treeIndex }: TreeNodeKeyParams) => treeIndex,
-                });
-
-                if (result && result.node) {
-                    const nodeExists = selectedNodes.some(
-                        (item) => item.node.title === result.node.title
-                    );
-
-                    if (!nodeExists) {
-                        newSelectedNodes.push({ node: result.node as Node });
-                    }
-                }
-            }
-            setSelectedNodes((prev) => [...prev, ...newSelectedNodes]);
-        } else {
-            const updatedPath = treeIndex && treeIndex
-            setSelectedNodes((prev) => {
-                const nodeExists = prev.some(
-                    (item) => item.node.title === node.title
-                );
-                if (nodeExists) {
-                    return prev.filter((item) => item.node.title !== node.title);
-                } else {
-                    return [...prev, { node, path: updatedPath as number }];
-                }
+        const newSelectedNodes: { node: Node, path: Array<string> }[] = [];
+        for (let i = startIndex + 1; i <= endIndex; i++) {
+            const result = getNodeAtPath({
+                treeData: orderTreeData,
+                path: [...parent, i],
+                getNodeKey: ({ treeIndex }: TreeNodeKeyParams) => treeIndex,
             });
-        }
 
-        if (pathToTheClickedNode) {
-            setFirstSelectedIndex(pathToTheClickedNode);
+            if (result && result.node) {
+                const nodeExists = selectedNodes.some(
+                    (item) => item.node.title === result.node.title
+                );
+
+                if (!nodeExists) {
+                    newSelectedNodes.push({ node: result.node as Node, path: extendedNode.path });
+                }
+            }
         }
+        setSelectedNodes((prev) => [...prev, ...newSelectedNodes]);
+    } else {
+        const updatedPath = treeIndex && treeIndex
+        setSelectedNodes((prev) => {
+            const nodeExists = prev.some(
+                (item) => item.node.title === node.title
+            );
+            if (nodeExists) {
+                return prev.filter((item) => item.node.title !== node.title);
+            } else {
+                return [...prev, { node, path: extendedNode.path }];
+            }
+        });
+    }
+
+    if (pathToTheClickedNode) {
+        setFirstSelectedIndex(pathToTheClickedNode);
+    }
 }
 
 const reducer = produce((draft: TreeState, action: ActionType) => {
