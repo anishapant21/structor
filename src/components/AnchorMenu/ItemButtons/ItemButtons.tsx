@@ -50,8 +50,8 @@ export const generateItemButtons = (
             aria-label="Settings element"
             title={t('Settings')}
         >
-         <i className="settings-icon" />
-        {showLabel && <label>{t('Settings')}</label>}
+            <i className="settings-icon" />
+            {showLabel && <label>{t('Settings')}</label>}
         </button>,
         <button
             key="duplicate-item-button"

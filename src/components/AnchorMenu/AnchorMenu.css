@@ -46,7 +46,7 @@
 
 .selectedHighlight {
     .rst__rowContents {
-        background-color: #e9b8bf !important;
+        background-color: #e4f7f9 !important;
 
     }
 }
@@ -69,7 +69,7 @@
 
 .anchor-menu__topitem .rst__rowContents {
     /* override styling */
-    background-color: #e4f7f9;
+    /* background-color: #e4f7f9; */
 }
 
 .anchor-menu__title {
