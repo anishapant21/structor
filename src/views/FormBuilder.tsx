@@ -13,6 +13,17 @@ import TranslationModal from '../components/Languages/Translation/TranslationMod
 import FormFillerPreview from '../components/Refero/FormFillerPreview';
 
 import './FormBuilder.css';
+import { IQuestionnaireItemType } from '../types/IQuestionnareItemType';
+import DeleteConfirmation from '../components/MultiSelect/DeleteConfirmation';
+import { deleteItemAction } from '../store/treeStore/treeActions';
+
+interface Node {
+    title: string;
+    hierarchy?: string;
+    nodeType?: IQuestionnaireItemType;
+    nodeReadableType?: string;
+    children: Node[];
+}
 
 const FormBuilder = (): JSX.Element => {
     const { state, dispatch } = useContext(TreeContext);
@@ -23,9 +34,26 @@ const FormBuilder = (): JSX.Element => {
     const [translationErrors, setTranslationErrors] = useState<Array<ValidationErrors>>([]);
     const [translateLang, setTranslateLang] = useState('');
 
+    const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node, path: Array<string> }[]>([]);
+    const [isDeleteConfirmationModalVisible, setIsDeleteConfirmationModalVisible] = useState(false)
+
     const toggleFormDetails = useCallback(() => {
         setShowFormDetails(!showFormDetails);
     }, [showFormDetails]);
+
+    const treePathToOrderArray = (treePath: string[]): string[] => {
+        const newPath = [...treePath];
+        newPath.splice(-1);
+        return newPath;
+    };
+
+    const handleOnMultipleDelete = () => {
+        selectedNodes.map((item) => {
+            dispatch(deleteItemAction(item.node.title, treePathToOrderArray(item.path)));
+        })
+        setSelectedNodes([])
+        setIsDeleteConfirmationModalVisible(false)
+    }
 
     return (
         <>
@@ -36,7 +64,15 @@ const FormBuilder = (): JSX.Element => {
                 translationErrors={translationErrors}
                 setTranslationErrors={setTranslationErrors}
             />
-
+            {selectedNodes.length > 0 && <div className={`header-wrapper ${true ? "" : "d-none"}`}>
+                <div className='title'>
+                    <i className="cross-icon" onClick={() => setSelectedNodes([])} />
+                    <span className='items-selected'>{selectedNodes.length} selected</span>
+                </div>
+                <div className='delete-multiple p-2' onClick={() => setIsDeleteConfirmationModalVisible(true)}>
+                    <i className="delete-icon" />
+                    Delete</div>
+            </div>}
             <div className="editor">
                 <AnchorMenu
                     dispatch={dispatch}
@@ -44,6 +80,8 @@ const FormBuilder = (): JSX.Element => {
                     qItems={state.qItems}
                     qCurrentItem={state.qCurrentItem}
                     validationErrors={validationErrors}
+                    selectedNodes={selectedNodes}
+                    setSelectedNodes={setSelectedNodes}
                 />
                 {showPreview && (
                     <FormFillerPreview
@@ -75,6 +113,7 @@ const FormBuilder = (): JSX.Element => {
                     isOpen={showFormDetails}
                 />
                 <QuestionDrawer validationErrors={validationErrors} />
+                <DeleteConfirmation isVisible={isDeleteConfirmationModalVisible} setIsDeleteConfirmationModalVisible={setIsDeleteConfirmationModalVisible} handleOnMultipleDelete={handleOnMultipleDelete} />
             </div>
         </>
     );

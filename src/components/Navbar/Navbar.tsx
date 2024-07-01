@@ -112,7 +112,7 @@ const Navbar = ({
         <>
             <header ref={navBarRef}>
                 <div className="form-title">
-                    <h1>{getFileName()}</h1>
+                    <h1>Flowsheets</h1>
                 </div>
 
                 <div className="pull-right">
