@@ -1,24 +1,25 @@
-import './AnchorMenu.css';
-import { DndProvider, DragSource, DragSourceConnector, ConnectDragSource } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionType, Items, MarkedItem, OrderItem, TreeContext } from '../../store/treeStore/treeStore';
+import { DndProvider, DragSource, DragSourceConnector, ConnectDragSource } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { SortableTreeWithoutDndContext as SortableTree } from '@nosferatu500/react-sortable-tree';
+import '@nosferatu500/react-sortable-tree/style.css';
+
 import { IQuestionnaireItemType } from '../../types/IQuestionnareItemType';
 import {
     moveItemAction,
     newItemAction,
     reorderItemAction,
     selectMultipleNodesAction,
-    updateMarkedLinkIdAction,
 } from '../../store/treeStore/treeActions';
+import { ActionType, Items, MarkedItem, OrderItem, TreeContext } from '../../store/treeStore/treeStore';
 import { ValidationErrors } from '../../helpers/orphanValidation';
-import { SortableTreeWithoutDndContext as SortableTree } from '@nosferatu500/react-sortable-tree';
-import '@nosferatu500/react-sortable-tree/style.css';
 import { isIgnorableItem } from '../../helpers/itemControl';
-import { generateItemButtons } from './ItemButtons/ItemButtons';
 import { canTypeHaveChildren, getInitialItemConfig } from '../../helpers/questionTypeFeatures';
+
+import { generateItemButtons } from './ItemButtons/ItemButtons';
+import './AnchorMenu.css';
 
 interface Node {
     title: string;
@@ -56,35 +57,6 @@ interface NodeVisibilityToggleEvent {
     expanded: boolean;
 }
 
-const newNodeLinkId = 'NEW';
-const externalNodeType = 'yourNodeType';
-
-const externalNodeSpec = {
-    // This needs to return an object with a property `node` in it.
-    // Object rest spread is recommended to avoid side effects of
-    // referencing the same object in different trees.
-    beginDrag: (componentProps: { node: Node }) => ({ node: { ...componentProps.node } }),
-};
-const externalNodeCollect = (connect: DragSourceConnector) => ({
-    connectDragSource: connect.dragSource(),
-    // Add props via react-dnd APIs to enable more visual
-    // customization of your component
-    // isDragging: monitor.isDragging(),
-    // didDrop: monitor.didDrop(),
-});
-
-const ExternalNodeBaseComponent = (props: { connectDragSource: ConnectDragSource; node: Node }): JSX.Element | null => {
-    return props.connectDragSource(<div className="anchor-menu__dragcomponent">{props.node.nodeReadableType}</div>, {
-        dropEffect: 'copy',
-    });
-};
-
-const YourExternalNodeComponent = DragSource(
-    externalNodeType,
-    externalNodeSpec,
-    externalNodeCollect,
-)(ExternalNodeBaseComponent);
-
 const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     const { t } = useTranslation();
     const { dispatch } = useContext(TreeContext);
@@ -93,8 +65,56 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     const [collapsedNodes, setCollapsedNodes] = React.useState<string[]>([]);
     const [firstSelectedIndex, setFirstSelectedIndex] = React.useState<number[] | []>([]);
 
+    const newNodeLinkId = 'NEW';
+    const externalNodeType = 'yourNodeType';
+
+    const externalNodeSpec = {
+        // This needs to return an object with a property `node` in it.
+        // Object rest spread is recommended to avoid side effects of
+        // referencing the same object in different trees.
+        beginDrag: (componentProps: { node: Node }) => ({ node: { ...componentProps.node } }),
+    };
+    const externalNodeCollect = (connect: DragSourceConnector) => ({
+        connectDragSource: connect.dragSource(),
+        // Add props via react-dnd APIs to enable more visual
+        // customization of your component
+        // isDragging: monitor.isDragging(),
+        // didDrop: monitor.didDrop(),
+    });
+
+    /* eslint-disable react/prop-types */
+    const ExternalNodeBaseComponent = (props: { connectDragSource: ConnectDragSource; node: Node }): JSX.Element | null => {
+        return props.connectDragSource(<div className="anchor-menu__dragcomponent">{props.node.nodeReadableType}  <div className='plus-icon' onClick={() => handleOnElementAdd(props.node)}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="#1a738e" className="bi bi-plus-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z" />
+            </svg>
+        </div></div>, {
+            dropEffect: 'copy',
+        });
+    };
+
+    /* eslint-enable react/prop-types */
+    const YourExternalNodeComponent = DragSource(
+        externalNodeType,
+        externalNodeSpec,
+        externalNodeCollect,
+    )(ExternalNodeBaseComponent);
+
+    const handleOnElementAdd = (node: Node) => {
+        const moveIndex = orderTreeData.length;
+        const newPath: string[] = []
+
+        if (node.nodeType) {
+            props.dispatch(
+                newItemAction(
+                    getInitialItemConfig(node.nodeType, t('Recipient component')),
+                    newPath,
+                    moveIndex,
+                ))
+        }
+    }
+
     const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode: ExtendedNode) => {
-        console.log(extendedNode.path)
         dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex))
     }
 
