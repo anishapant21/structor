@@ -1,25 +1,25 @@
-/* eslint-disable react/prop-types */
-import './AnchorMenu.css';
-import { DndProvider, DragSource, DragSourceConnector, ConnectDragSource } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionType, Items, MarkedItem, OrderItem, TreeContext } from '../../store/treeStore/treeStore';
+import { DndProvider, DragSource, DragSourceConnector, ConnectDragSource } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { SortableTreeWithoutDndContext as SortableTree } from '@nosferatu500/react-sortable-tree';
+import '@nosferatu500/react-sortable-tree/style.css';
+
 import { IQuestionnaireItemType } from '../../types/IQuestionnareItemType';
 import {
     moveItemAction,
     newItemAction,
     reorderItemAction,
     selectMultipleNodesAction,
-    updateMarkedLinkIdAction,
 } from '../../store/treeStore/treeActions';
+import { ActionType, Items, MarkedItem, OrderItem, TreeContext } from '../../store/treeStore/treeStore';
 import { ValidationErrors } from '../../helpers/orphanValidation';
-import { SortableTreeWithoutDndContext as SortableTree } from '@nosferatu500/react-sortable-tree';
-import '@nosferatu500/react-sortable-tree/style.css';
 import { isIgnorableItem } from '../../helpers/itemControl';
-import { generateItemButtons } from './ItemButtons/ItemButtons';
 import { canTypeHaveChildren, getInitialItemConfig } from '../../helpers/questionTypeFeatures';
+
+import { generateItemButtons } from './ItemButtons/ItemButtons';
+import './AnchorMenu.css';
 
 interface Node {
     title: string;
@@ -82,6 +82,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
         // didDrop: monitor.didDrop(),
     });
 
+    /* eslint-disable react/prop-types */
     const ExternalNodeBaseComponent = (props: { connectDragSource: ConnectDragSource; node: Node }): JSX.Element | null => {
         return props.connectDragSource(<div className="anchor-menu__dragcomponent">{props.node.nodeReadableType}  <div className='plus-icon' onClick={() => handleOnElementAdd(props.node)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="#1a738e" className="bi bi-plus-circle-fill" viewBox="0 0 16 16">
@@ -92,6 +93,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
         });
     };
 
+    /* eslint-enable react/prop-types */
     const YourExternalNodeComponent = DragSource(
         externalNodeType,
         externalNodeSpec,
@@ -113,7 +115,6 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     }
 
     const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode: ExtendedNode) => {
-        console.log(extendedNode.path)
         dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex))
     }
 
