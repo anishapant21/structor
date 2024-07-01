@@ -232,7 +232,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                                     selectedNodes.map((item, i) => {
                                         props.dispatch(reorderItemAction(item.node.title, newPath, moveIndex + i));
                                     })
-
+                                    setSelectedNodes([])
                                 } else {
                                     props.dispatch(reorderItemAction(node.title, newPath, moveIndex));
                                 }
@@ -241,6 +241,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                                     selectedNodes.map((item, i) => {
                                         props.dispatch(moveItemAction(item.node.title, newPath, oldPath, moveIndex + i));
                                     })
+                                    setSelectedNodes([])
                                 } else {
                                     props.dispatch(moveItemAction(node.title, newPath, oldPath, moveIndex));
                                 }
@@ -295,6 +296,8 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                             treePathToOrderArray(extendedNode.path),
                             false,
                             props.dispatch,
+                            selectedNodes,
+                            setSelectedNodes
                         ),
                     })}
                 />
