@@ -689,7 +689,7 @@ function removeAttributeFromItem(draft: TreeState, action: RemoveItemAttributeAc
 }
 
 // Takes the node title (unique id) and orderedTreeData and returns path to that node
-const pathToChild = (index: string, list: Node[]): number[] => {
+const pathToChild = (index: string, list: Node[], collapsedNodes: string[]): number[] => {
     let visitedNode: number[] | null = null;
     let globalIndex = -1;
 
@@ -703,8 +703,8 @@ const pathToChild = (index: string, list: Node[]): number[] => {
                 return currentPath.slice(-3); // Return last 3 elements
             }
 
-            // If the current object has children, recurse into the children
-            if (child[i].children && child[i].children.length > 0) {
+            // If the current object has children and is not in the collapsed nodes, recurse into the children
+            if (child[i].children && child[i].children.length > 0 && !collapsedNodes.includes(child[i].title)) {
                 const result = getData(child[i].children, currentPath);
                 if (result) {
                     return result;
@@ -719,10 +719,11 @@ const pathToChild = (index: string, list: Node[]): number[] => {
 };
 
 
-function selectMultipleNodes(draft: any, action: selectMultipleNodesAction): void {
-    const { event, firstSelectedIndex, selectedNodes, setSelectedNodes, setFirstSelectedIndex, extendedNode, orderTreeData, node } = action;
 
-    const pathToTheClickedNode = pathToChild(extendedNode.node.title, orderTreeData)
+function selectMultipleNodes(draft: any, action: selectMultipleNodesAction): void {
+    const { event, firstSelectedIndex, selectedNodes, setSelectedNodes, setFirstSelectedIndex, extendedNode, orderTreeData, node, collapsedNodes } = action;
+
+    const pathToTheClickedNode = pathToChild(extendedNode.node.title, orderTreeData, collapsedNodes)
 
     const { treeIndex } = extendedNode;
 

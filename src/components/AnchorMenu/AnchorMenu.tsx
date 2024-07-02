@@ -115,7 +115,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     }
 
     const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode: ExtendedNode) => {
-        dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex))
+        dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex, collapsedNodes))
     }
 
     const mapToTreeData = (item: OrderItem[], hierarchy: string, parentLinkId?: string): Node[] => {
