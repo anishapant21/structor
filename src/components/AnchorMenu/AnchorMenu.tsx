@@ -115,7 +115,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     }
 
     const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode: ExtendedNode) => {
-        dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex))
+        dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex, collapsedNodes))
     }
 
     const mapToTreeData = (item: OrderItem[], hierarchy: string, parentLinkId?: string): Node[] => {
@@ -225,25 +225,27 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                                 ),
                             );
                         } else {
-                            const oldPath = treePathToOrderArray(prevPath);
-                            // reorder within same parent
-                            if (JSON.stringify(newPath) === JSON.stringify(oldPath)) {
-                                if (selectedNodes.length > 1 && selectedNodes.some(item => item.node.title === node.title)) {
-                                    selectedNodes.map((item, i) => {
+                            if (selectedNodes.length > 1 && selectedNodes.some(item => item.node.title === node.title)) {
+                                selectedNodes.map((item, i) => {
+                                    const oldPath = treePathToOrderArray(item.path)
+                                    if (JSON.stringify(item.path) === JSON.stringify(newPath)) {
                                         props.dispatch(reorderItemAction(item.node.title, newPath, moveIndex + i));
-                                    })
 
-                                } else {
-                                    props.dispatch(reorderItemAction(node.title, newPath, moveIndex));
-                                }
-                            } else {
-                                if (selectedNodes.length > 1 && selectedNodes.some(item => item.node.title === node.title)) {
-                                    selectedNodes.map((item, i) => {
+                                    } else {
                                         props.dispatch(moveItemAction(item.node.title, newPath, oldPath, moveIndex + i));
-                                    })
+
+                                    }
+                                })
+                                setSelectedNodes([])
+                            } else {
+                                const oldPath = treePathToOrderArray(prevPath);
+                                if (JSON.stringify(newPath) === JSON.stringify(oldPath)) {
+                                    props.dispatch(reorderItemAction(node.title, newPath, moveIndex));
+
                                 } else {
                                     props.dispatch(moveItemAction(node.title, newPath, oldPath, moveIndex));
                                 }
+
                             }
                         }
                     }}
@@ -295,6 +297,8 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                             treePathToOrderArray(extendedNode.path),
                             false,
                             props.dispatch,
+                            selectedNodes,
+                            setSelectedNodes
                         ),
                     })}
                 />
