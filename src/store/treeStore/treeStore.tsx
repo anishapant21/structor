@@ -700,7 +700,7 @@ const pathToChild = (index: string, list: Node[], collapsedNodes: string[]): num
 
             // Check if the current object's title matches the id we're looking for
             if (child[i].title === index) {
-                return currentPath.slice(-3); // Return last 3 elements
+                return currentPath;
             }
 
             // If the current object has children and is not in the collapsed nodes, recurse into the children
@@ -718,6 +718,149 @@ const pathToChild = (index: string, list: Node[], collapsedNodes: string[]): num
     return visitedNode ? visitedNode : [];
 };
 
+// Function to check if all children are selected
+const areAllChildrenNodesSelected = (
+    currentNode: Node,
+    parentNode: Node,
+    selectedNodes: { node: Node, path: Array<string> }[]
+): boolean => {
+    const selectedTitles = new Set(selectedNodes.map(item => item.node.title));
+
+    const checkAllChildren = (node: Node): boolean => {
+        if (!node.children || node.children.length === 0) {
+            return true;
+        }
+
+        for (const child of node.children) {
+            if (!selectedTitles.has(child.title)) {
+                return false;
+            }
+            if (!checkAllChildren(child)) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+
+    selectedTitles.add(currentNode.title);
+    return checkAllChildren(parentNode);
+};
+
+// Function to recursively check and add parent nodes to selectedNodes
+const checkAndAddParentNodes = (
+    extendedNode: ExtendedNode,
+    orderTreeData: Node[],
+    selectedNodes: { node: Node, path: Array<string> }[],
+    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node, path: Array<string> }[]>>,
+    collapsedNodes: string[]
+) => {
+    const path = extendedNode.path.slice(0, -1); // Remove the last element to get the parent path
+    let currentPath = path;
+    const allSelectedNodes = [...selectedNodes];
+
+    while (currentPath.length > 0) {
+        const calculatedPath = pathToChild(currentPath[currentPath.length - 1], orderTreeData, collapsedNodes);
+
+        const result = getNodeAtPath({
+            treeData: orderTreeData,
+            path: calculatedPath,
+            getNodeKey: ({ treeIndex }: { treeIndex: number }) => treeIndex,
+        });
+
+        if (result && result.node && areAllChildrenNodesSelected(extendedNode.node, result.node, allSelectedNodes)) {
+            const nodeExists = allSelectedNodes.some(
+                (item) => item.node.title === result.node.title
+            );
+
+            if (!nodeExists) {
+                setSelectedNodes(prev => [
+                    ...prev,
+                    { node: result.node, path: currentPath },
+                ]);
+
+                allSelectedNodes.push({ node: result.node, path: currentPath });
+            }
+
+            // Move to the next parent
+            currentPath = currentPath.slice(0, -1);
+        } else {
+            // If not all children are selected, break the loop
+            break;
+        }
+    }
+};
+
+function recursiveAddNodes(node: Node, path: string[], selectedNodes: { node: Node; path: string[]; }[]) {
+    const nodes: { node: Node; path: string[]; }[] = [];
+    const addNodeIfNotExist = (node: Node, path: string[]) => {
+        const nodeExists = selectedNodes.some(
+            (item) => item.node.title === node.title
+        );
+        if (!nodeExists) {
+            nodes.push({ node, path });
+            if (node.children) {
+                for (const child of node.children) {
+                    addNodeIfNotExist(child, [...path, child.title]);
+                }
+            }
+        }
+    };
+    addNodeIfNotExist(node, path);
+    return nodes;
+};
+
+const recursiveRemoveNodes = (node: Node, selectedNodes: { node: Node; path: string[]; }[]) => {
+    let nodes = [...selectedNodes];
+
+    const removeNodeAndChildren = (node: Node) => {
+        nodes = nodes.filter((item) => item.node.title !== node.title);
+        if (node.children) {
+            for (const child of node.children) {
+                removeNodeAndChildren(child);
+            }
+        }
+    };
+    removeNodeAndChildren(node);
+    return nodes;
+};
+
+const checkAndRemoveParentNodes = (
+    extendedNode: ExtendedNode,
+    orderTreeData: Node[],
+    selectedNodes: { node: Node, path: Array<string> }[],
+    collapsedNodes: string[]
+): { node: Node, path: Array<string> }[] => {
+    const path = extendedNode.path.slice(0, -1); // Remove the last element to get the parent path
+    let currentPath = path;
+    let updatedSelectedNodes = [...selectedNodes]; // Copy the selectedNodes array
+
+    while (currentPath.length > 0) {
+        const calculatedPath = pathToChild(currentPath[currentPath.length - 1], orderTreeData, collapsedNodes);
+
+        const result = getNodeAtPath({
+            treeData: orderTreeData,
+            path: calculatedPath,
+            getNodeKey: ({ treeIndex }: { treeIndex: number }) => treeIndex,
+        });
+
+        if (result && result.node) {
+            updatedSelectedNodes = updatedSelectedNodes.filter(
+                (item) => item.node.title !== result.node.title
+            );
+
+            // Move to the next parent
+            currentPath = currentPath.slice(0, -1);
+        } else {
+            // If no parent is found, break the loop
+            break;
+        }
+    }
+
+    return updatedSelectedNodes;
+};
+
 
 
 function selectMultipleNodes(draft: any, action: selectMultipleNodesAction): void {
@@ -728,20 +871,27 @@ function selectMultipleNodes(draft: any, action: selectMultipleNodesAction): voi
     const { treeIndex } = extendedNode;
 
     if (event.shiftKey && firstSelectedIndex !== null && treeIndex != undefined) {
-
         const parent = pathToTheClickedNode.slice(0, -1);
         // Select range of nodes between firstSelectedIndex and treeIndex
-        let startIndex = Math.min(firstSelectedIndex[firstSelectedIndex.length - 1], pathToTheClickedNode[pathToTheClickedNode.length - 1]);
-        let endIndex = Math.max(firstSelectedIndex[firstSelectedIndex.length - 1], pathToTheClickedNode[pathToTheClickedNode.length - 1]);
+        let startIndex = Math.min(
+            firstSelectedIndex[firstSelectedIndex.length - 1],
+            pathToTheClickedNode[pathToTheClickedNode.length - 1]
+        );
+        let endIndex = Math.max(
+            firstSelectedIndex[firstSelectedIndex.length - 1],
+            pathToTheClickedNode[pathToTheClickedNode.length - 1]
+        );
 
-
-        // handle cases for reverse mode - firstSelectedIndex is the first one and treeIndex is the second one
-        if (firstSelectedIndex[firstSelectedIndex.length - 1] > pathToTheClickedNode[pathToTheClickedNode.length - 1]) {
+        // Handle cases for reverse mode - firstSelectedIndex is the first one and treeIndex is the second one
+        if (
+            firstSelectedIndex[firstSelectedIndex.length - 1] >
+            pathToTheClickedNode[pathToTheClickedNode.length - 1]
+        ) {
             startIndex = startIndex - 1;
             endIndex = endIndex - 1;
         }
 
-        const newSelectedNodes: { node: Node, path: Array<string> }[] = [];
+        const newSelectedNodes: { node: Node; path: string[]; }[] = [];
         for (let i = startIndex + 1; i <= endIndex; i++) {
             const result = getNodeAtPath({
                 treeData: orderTreeData,
@@ -755,23 +905,37 @@ function selectMultipleNodes(draft: any, action: selectMultipleNodesAction): voi
                 );
 
                 if (!nodeExists) {
-                    newSelectedNodes.push({ node: result.node as Node, path: extendedNode.path });
+                    const nodesToAdd = recursiveAddNodes(result.node, extendedNode.path, selectedNodes);
+                    newSelectedNodes.push(...nodesToAdd);
                 }
             }
         }
+
+        checkAndAddParentNodes(extendedNode, orderTreeData, [...newSelectedNodes, ...selectedNodes], setSelectedNodes, collapsedNodes)
         setSelectedNodes((prev) => [...prev, ...newSelectedNodes]);
     } else {
-        const updatedPath = treeIndex && treeIndex
+        let newNodes;
+
         setSelectedNodes((prev) => {
-            const nodeExists = prev.some(
-                (item) => item.node.title === node.title
-            );
+            const nodeExists = prev.some((item) => item.node.title === node.title);
             if (nodeExists) {
-                return prev.filter((item) => item.node.title !== node.title);
+                // If node exists, filter it out the node along with child
+                let updatedNodes = recursiveRemoveNodes(node, prev);
+
+                updatedNodes = checkAndRemoveParentNodes(extendedNode, orderTreeData, updatedNodes, collapsedNodes);
+
+                return updatedNodes;
             } else {
-                return [...prev, { node, path: extendedNode.path }];
+                // If node doesn't exist, add node and its children recursively
+                newNodes = recursiveAddNodes(node, extendedNode.path, selectedNodes);
+
+                return [...prev, ...newNodes];
             }
         });
+
+        if (newNodes) {
+            checkAndAddParentNodes(extendedNode, orderTreeData, [...newNodes, ...selectedNodes], setSelectedNodes, collapsedNodes)
+        }
     }
 
     if (pathToTheClickedNode) {

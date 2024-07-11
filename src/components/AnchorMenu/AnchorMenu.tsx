@@ -42,6 +42,7 @@ interface AnchorMenuProps {
 interface ExtendedNode {
     node: Node;
     path: string[];
+    parentNode: Node;
 }
 
 interface NodeMoveEvent {

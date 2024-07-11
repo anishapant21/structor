@@ -79,6 +79,7 @@ export interface Node {
 export interface ExtendedNode {
     node: Node;
     path: string[];
+    parentNode : Node;
     treeIndex? : number;
 }
 

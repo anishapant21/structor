@@ -22,8 +22,8 @@ export const generateItemButtons = (
     parentArray: Array<string>,
     showLabel: boolean,
     dispatch: React.Dispatch<ActionType>,
-    selectedNodes: { node: Node, path: Array<string> }[],
-    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node, path: Array<string> }[]>>
+    selectedNodes?: { node: Node, path: Array<string> }[],
+    setSelectedNodes?: React.Dispatch<React.SetStateAction<{ node: Node, path: Array<string> }[]>>
 ): JSX.Element[] => {
     if (!item) {
         return [];
@@ -31,9 +31,11 @@ export const generateItemButtons = (
 
     const dispatchDeleteItem = (event: MouseEvent<HTMLButtonElement>): void => {
         event.stopPropagation();
-        const updatedSelectedNodes = selectedNodes.filter((node) => node.node.title != item.linkId)
+        const updatedSelectedNodes = selectedNodes?.filter((node) => node.node.title != item.linkId) || [];
         dispatch(deleteItemAction(item.linkId, parentArray));
-        setSelectedNodes(updatedSelectedNodes)
+        if (setSelectedNodes) {
+            setSelectedNodes(updatedSelectedNodes);
+        }
     };
 
     const dispatchDuplicateItem = (event: MouseEvent<HTMLButtonElement>): void => {
