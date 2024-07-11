@@ -183,7 +183,20 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
         );
     };
 
+    const isParentSelected = (
+        path: string[],
+    ): boolean => {
+        for (const pathString of path) {
+            // Check if any of the selectedNodes have a title that matches the pathString
+            if (selectedNodes.some(selectedNode => selectedNode.node.title === pathString)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
     const orderTreeData = mapToTreeData(props.qOrder, '');
+
     return (
         <DndProvider backend={HTML5Backend}>
             <div className="questionnaire-overview">
@@ -228,13 +241,18 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                         } else {
                             if (selectedNodes.length > 1 && selectedNodes.some(item => item.node.title === node.title)) {
                                 selectedNodes.map((item, i) => {
+                                    const isMovable = isParentSelected(item.path.slice(-2, -1))
+
+                                    if (!isMovable) {
+                                        return;
+                                    }
+
                                     const oldPath = treePathToOrderArray(item.path)
                                     if (JSON.stringify(item.path) === JSON.stringify(newPath)) {
                                         props.dispatch(reorderItemAction(item.node.title, newPath, moveIndex + i));
 
                                     } else {
                                         props.dispatch(moveItemAction(item.node.title, newPath, oldPath, moveIndex + i));
-
                                     }
                                 })
                                 setSelectedNodes([])
@@ -246,7 +264,6 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                                 } else {
                                     props.dispatch(moveItemAction(node.title, newPath, oldPath, moveIndex));
                                 }
-
                             }
                         }
                     }}
