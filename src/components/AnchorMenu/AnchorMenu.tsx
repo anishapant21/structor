@@ -240,6 +240,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                             );
                         } else {
                             if (selectedNodes.length > 1 && selectedNodes.some(item => item.node.title === node.title)) {
+                                let count = 0;
                                 selectedNodes.map((item, i) => {
                                     const isMovable = isParentSelected(item.path.slice(-2, -1))
 
@@ -248,12 +249,13 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                                     }
 
                                     const oldPath = treePathToOrderArray(item.path)
-                                    if (JSON.stringify(item.path) === JSON.stringify(newPath)) {
-                                        props.dispatch(reorderItemAction(item.node.title, newPath, moveIndex + i));
+                                    if (JSON.stringify(oldPath) === JSON.stringify(newPath)) {
+                                        props.dispatch(reorderItemAction(item.node.title, newPath, moveIndex + count));
 
                                     } else {
-                                        props.dispatch(moveItemAction(item.node.title, newPath, oldPath, moveIndex + i));
+                                        props.dispatch(moveItemAction(item.node.title, newPath, oldPath, moveIndex + count));
                                     }
+                                    count++;
                                 })
                                 setSelectedNodes([])
                             } else {
