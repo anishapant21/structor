@@ -858,6 +858,34 @@ const checkAndRemoveParentNodes = (
     return updatedSelectedNodes;
 };
 
+const findNodePath = (title: string, list: Node[]): string[] | null => {
+    const path: string[] = [];
+
+    const searchTree = (nodes: Node[], path: string[]): boolean => {
+        for (let i = 0; i < nodes.length; i++) {
+            path.push(nodes[i].title);
+
+            if (nodes[i].title === title) {
+                return true;
+            }
+
+            if (nodes[i].children) {
+                const nodePath = searchTree(nodes[i].children, path);
+                if (nodePath) {
+                    return true;
+                }
+            }
+
+            path.pop();
+        }
+
+        return false;
+    };
+
+    const nodePath = searchTree(list, path);
+    return nodePath ? path : null;
+};
+
 
 
 function selectMultipleNodes(draft: any, action: selectMultipleNodesAction): void {
@@ -897,20 +925,24 @@ function selectMultipleNodes(draft: any, action: selectMultipleNodesAction): voi
             });
 
             if (result && result.node) {
+                const nodePath = findNodePath(result.node.title, orderTreeData)
+
                 const nodeExists = selectedNodes.some(
                     (item) => item.node.title === result.node.title
                 );
 
+
                 if (!nodeExists) {
-                    const nodesToAdd = recursiveAddNodes(result.node, extendedNode.path, selectedNodes);
+                    const nodesToAdd = recursiveAddNodes(result.node, nodePath ? nodePath : [], selectedNodes);
+
                     newSelectedNodes.push(...nodesToAdd);
                 }
             }
         }
 
-        // get items from here and then save
         newSelectedNodes = checkAndAddParentNodes(extendedNode, orderTreeData, [...newSelectedNodes, ...selectedNodes], collapsedNodes)
-        setSelectedNodes((prev) => [...prev, ...newSelectedNodes]);
+
+        setSelectedNodes(newSelectedNodes);
     } else {
         let newNodes;
 
@@ -920,6 +952,7 @@ function selectMultipleNodes(draft: any, action: selectMultipleNodesAction): voi
                 // If node exists, filter it out the node along with child
                 let updatedNodes = recursiveRemoveNodes(node, prev);
 
+                // Filter out the parent nodes of the clicked (unselected) node
                 updatedNodes = checkAndRemoveParentNodes(extendedNode, orderTreeData, updatedNodes, collapsedNodes);
 
                 return updatedNodes;
@@ -932,6 +965,7 @@ function selectMultipleNodes(draft: any, action: selectMultipleNodesAction): voi
         });
 
         if (newNodes) {
+            // Check if all the siblings node are selected and if yes add parent nodes
             const updatedList = checkAndAddParentNodes(extendedNode, orderTreeData, [...newNodes, ...selectedNodes], collapsedNodes)
             setSelectedNodes(updatedList)
         }
