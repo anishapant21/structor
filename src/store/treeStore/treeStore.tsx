@@ -55,8 +55,8 @@ import {
     UpdateValueSetAction,
     UPDATE_SETTING_TRANSLATION_ACTION,
     UpdateSettingTranslationAction,
-    selectMultipleNodesAction,
-    SELECT_MULTIPLE_NODES_ACTION,
+    updateSelectedNodesAction,
+    UPDATE_SELECTED_NODES_ACTION,
 } from './treeActions';
 import { IQuestionnaireMetadata, IQuestionnaireMetadataType } from '../../types/IQuestionnaireMetadataType';
 import createUUID from '../../helpers/CreateUUID';
@@ -99,7 +99,7 @@ export type ActionType =
     | RemoveItemAttributeAction
     | SaveAction
     | UpdateMarkedLinkId
-    | selectMultipleNodesAction;
+    | updateSelectedNodesAction;
 
 export interface Items {
     [linkId: string]: QuestionnaireItem;
@@ -748,6 +748,7 @@ const areAllChildrenNodesSelected = (
     return checkAllChildren(parentNode);
 };
 
+// Return a list with parent nodes upto the top level if all it's children are selected
 const checkAndAddParentNodes = (
     extendedNode: ExtendedNode,
     orderTreeData: Node[],
@@ -772,7 +773,6 @@ const checkAndAddParentNodes = (
                 (item) => item.node.title === result.node.title
             );
 
-            // for the item clicked, path should be extendedNode.path but for parent it should decrease
             if (!nodeExists) {
                 allSelectedNodes.push({ node: result.node, path: currentPath });
             }
@@ -788,7 +788,7 @@ const checkAndAddParentNodes = (
     return allSelectedNodes;
 };
 
-
+// Returns the list of passed node and it's children until the maximum depth
 function recursiveAddNodes(node: Node, path: string[], selectedNodes: { node: Node; path: string[]; }[]) {
     const nodes: { node: Node; path: string[]; }[] = [];
     const addNodeIfNotExist = (node: Node, path: string[]) => {
@@ -808,7 +808,7 @@ function recursiveAddNodes(node: Node, path: string[], selectedNodes: { node: No
     return nodes;
 };
 
-const recursiveRemoveNodes = (node: Node, selectedNodes: { node: Node; path: string[]; }[]) => {
+const recursiveRemoveChildNodes = (node: Node, selectedNodes: { node: Node; path: string[]; }[]) => {
     let nodes = [...selectedNodes];
 
     const removeNodeAndChildren = (node: Node) => {
@@ -886,91 +886,124 @@ const findNodePath = (title: string, list: Node[]): string[] | null => {
     return nodePath ? path : null;
 };
 
+// Handle the selection of a single node
+function handleSingleSelect(
+    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node; path: string[]; }[]>>,
+    node: Node,
+    extendedNode: ExtendedNode,
+    orderTreeData: Node[],
+    collapsedNodes: string[],
+    selectedNodes: { node: Node; path: string[]; }[]
+) {
+    let newNodes: { node: Node; path: string[]; }[] = [];
 
+    setSelectedNodes((prevSelectedNodes) => {
+        const nodeExists = prevSelectedNodes.some((item) => item.node.title === node.title);
+        if (nodeExists) {
+            // If node exists, remove it and its children from the selection
+            let updatedNodes = recursiveRemoveChildNodes(node, prevSelectedNodes);
 
-function selectMultipleNodes(draft: any, action: selectMultipleNodesAction): void {
-    const { event, firstSelectedIndex, selectedNodes, setSelectedNodes, setFirstSelectedIndex, extendedNode, orderTreeData, node, collapsedNodes } = action;
+            // Remove parent nodes if the node is unselected
+            updatedNodes = checkAndRemoveParentNodes(extendedNode, orderTreeData, updatedNodes, collapsedNodes);
 
-    const pathToTheClickedNode = pathToChild(extendedNode.node.title, orderTreeData, collapsedNodes)
-
-    const { treeIndex } = extendedNode;
-
-    if (event.shiftKey && firstSelectedIndex !== null && treeIndex != undefined) {
-        const parent = pathToTheClickedNode.slice(0, -1);
-        // Select range of nodes between firstSelectedIndex and treeIndex
-        let startIndex = Math.min(
-            firstSelectedIndex[firstSelectedIndex.length - 1],
-            pathToTheClickedNode[pathToTheClickedNode.length - 1]
-        );
-        let endIndex = Math.max(
-            firstSelectedIndex[firstSelectedIndex.length - 1],
-            pathToTheClickedNode[pathToTheClickedNode.length - 1]
-        );
-
-        // Handle cases for reverse mode - firstSelectedIndex is the first one and treeIndex is the second one
-        if (
-            firstSelectedIndex[firstSelectedIndex.length - 1] >
-            pathToTheClickedNode[pathToTheClickedNode.length - 1]
-        ) {
-            startIndex = startIndex - 1;
-            endIndex = endIndex - 1;
+            return updatedNodes;
+        } else {
+            // If node doesn't exist, add it and its children to the selection
+            newNodes = recursiveAddNodes(node, extendedNode.path, prevSelectedNodes);
+            return [...prevSelectedNodes, ...newNodes];
         }
+    });
 
-        let newSelectedNodes: { node: Node; path: string[]; }[] = [];
-        for (let i = startIndex + 1; i <= endIndex; i++) {
-            const result = getNodeAtPath({
-                treeData: orderTreeData,
-                path: [...parent, i],
-                getNodeKey: ({ treeIndex }: TreeNodeKeyParams) => treeIndex,
-            });
-
-            if (result && result.node) {
-                const nodePath = findNodePath(result.node.title, orderTreeData)
-
-                const nodeExists = selectedNodes.some(
-                    (item) => item.node.title === result.node.title
-                );
+    if (newNodes.length > 0) {
+        // Add parent nodes if all children are selected
+        const updatedList = checkAndAddParentNodes(extendedNode, orderTreeData, [...newNodes, ...selectedNodes], collapsedNodes);
+        setSelectedNodes(updatedList);
+    }
+}
 
 
-                if (!nodeExists) {
-                    const nodesToAdd = recursiveAddNodes(result.node, nodePath ? nodePath : [], selectedNodes);
+// Select multiple nodes when the shift key is pressed
+function handleShiftSelect(
+    pathToTheClickedNode: number[],
+    firstSelectedIndex: number[] | null,
+    orderTreeData: Node[],
+    selectedNodes: { node: Node; path: string[]; }[],
+    extendedNode: ExtendedNode,
+    collapsedNodes: string[],
+    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node; path: string[]; }[]>>
+) {
+    if (!firstSelectedIndex) return;
 
-                    newSelectedNodes.push(...nodesToAdd);
-                }
-            }
-        }
+    const parent = pathToTheClickedNode.slice(0, -1);
+    const firstIndex = firstSelectedIndex[firstSelectedIndex.length - 1];
+    const clickedIndex = pathToTheClickedNode[pathToTheClickedNode.length - 1];
 
-        newSelectedNodes = checkAndAddParentNodes(extendedNode, orderTreeData, [...newSelectedNodes, ...selectedNodes], collapsedNodes)
+    // Determine the start and end indices for the range selection
+    let startIndex = Math.min(firstIndex, clickedIndex);
+    let endIndex = Math.max(firstIndex, clickedIndex);
 
-        setSelectedNodes(newSelectedNodes);
-    } else {
-        let newNodes;
+    // Adjust indices for reverse selection mode
+    if (firstIndex > clickedIndex) {
+        startIndex -= 1;
+        endIndex -= 1;
+    }
 
-        setSelectedNodes((prev) => {
-            const nodeExists = prev.some((item) => item.node.title === node.title);
-            if (nodeExists) {
-                // If node exists, filter it out the node along with child
-                let updatedNodes = recursiveRemoveNodes(node, prev);
+    let newSelectedNodes: { node: Node; path: string[]; }[] = [];
+    const selectedTitles = new Set(selectedNodes.map(item => item.node.title));
 
-                // Filter out the parent nodes of the clicked (unselected) node
-                updatedNodes = checkAndRemoveParentNodes(extendedNode, orderTreeData, updatedNodes, collapsedNodes);
-
-                return updatedNodes;
-            } else {
-                // If node doesn't exist, add node and its children recursively
-                newNodes = recursiveAddNodes(node, extendedNode.path, selectedNodes);
-
-                return [...prev, ...newNodes];
-            }
+    for (let i = startIndex + 1; i <= endIndex; i++) {
+        // TO-DO: The parent is considered to be the same, but what if we select different children in the end? Need to fix this.
+        const result = getNodeAtPath({
+            treeData: orderTreeData,
+            path: [...parent, i],
+            getNodeKey: ({ treeIndex }: TreeNodeKeyParams) => treeIndex,
         });
 
-        if (newNodes) {
-            // Check if all the siblings node are selected and if yes add parent nodes
-            const updatedList = checkAndAddParentNodes(extendedNode, orderTreeData, [...newNodes, ...selectedNodes], collapsedNodes)
-            setSelectedNodes(updatedList)
+        if (result && result.node) {
+            // Find the full path to the node
+            const nodePath = findNodePath(result.node.title, orderTreeData) || [];
+
+            // Check if the node is already selected
+            if (!selectedTitles.has(result.node.title)) {
+                // Add the node and its children to the selection
+                const nodesToAdd = recursiveAddNodes(result.node, nodePath, selectedNodes);
+                newSelectedNodes.push(...nodesToAdd);
+                nodesToAdd.forEach(node => selectedTitles.add(node.node.title));
+            }
         }
     }
 
+    // Add parent nodes if all children are selected
+    newSelectedNodes = checkAndAddParentNodes(extendedNode, orderTreeData, [...newSelectedNodes, ...selectedNodes], collapsedNodes);
+    setSelectedNodes(newSelectedNodes);
+}
+
+
+function updateSelectedNodes(draft: any, action: updateSelectedNodesAction): void {
+    const {
+        event,
+        firstSelectedIndex,
+        selectedNodes,
+        setSelectedNodes,
+        setFirstSelectedIndex,
+        extendedNode,
+        orderTreeData,
+        node,
+        collapsedNodes
+    } = action;
+
+    // Get the path to the node that was clicked
+    const pathToTheClickedNode = pathToChild(extendedNode.node.title, orderTreeData, collapsedNodes);
+    const { treeIndex } = extendedNode;
+
+    // Check if shift key is held and firstSelectedIndex is not null
+    if (event.shiftKey && firstSelectedIndex !== null && treeIndex !== undefined) {
+        handleShiftSelect(pathToTheClickedNode, firstSelectedIndex, orderTreeData, selectedNodes, extendedNode, collapsedNodes, setSelectedNodes);
+    } else {
+        handleSingleSelect(setSelectedNodes, node, extendedNode, orderTreeData, collapsedNodes, selectedNodes);
+    }
+
+    // Update the first selected index
     if (pathToTheClickedNode) {
         setFirstSelectedIndex(pathToTheClickedNode);
     }
@@ -1064,8 +1097,8 @@ const reducer = produce((draft: TreeState, action: ActionType) => {
         case UPDATE_MARKED_LINK_ID:
             updateMarkedItemId(draft, action);
             break;
-        case SELECT_MULTIPLE_NODES_ACTION:
-            selectMultipleNodes(draft, action);
+        case UPDATE_SELECTED_NODES_ACTION:
+            updateSelectedNodes(draft, action);
             break;
     }
 });
@@ -1096,3 +1129,7 @@ export const TreeContextProvider = (props: { children: JSX.Element }): JSX.Eleme
         <TreeContext.Provider value={{ state, dispatch }}>{props.children}</TreeContext.Provider>
     );
 };
+
+
+
+
