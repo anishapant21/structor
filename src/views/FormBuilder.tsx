@@ -47,8 +47,26 @@ const FormBuilder = (): JSX.Element => {
         return newPath;
     };
 
+    const isParentSelected = (
+        path: string[],
+    ): boolean => {
+        for (const pathString of path) {
+            // Check if any of the selectedNodes have a title that matches the pathString
+            if (selectedNodes.some(selectedNode => selectedNode.node.title === pathString)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
     const handleOnMultipleDelete = () => {
         selectedNodes.map((item) => {
+            const isDeletable = isParentSelected(item.path.slice(-2, -1))
+
+            if (!isDeletable) {
+                return;
+            }
+
             dispatch(deleteItemAction(item.node.title, treePathToOrderArray(item.path)));
         })
         setSelectedNodes([])
