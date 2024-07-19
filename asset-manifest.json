@@ -1,0 +1,30 @@
+{
+  "files": {
+    "main.css": "/structor/static/css/main.b4e3361f.chunk.css",
+    "main.js": "/structor/static/js/main.07696c33.chunk.js",
+    "runtime-main.js": "/structor/static/js/runtime-main.16604858.js",
+    "static/css/2.9041ce6a.chunk.css": "/structor/static/css/2.9041ce6a.chunk.css",
+    "static/js/2.a3bef3d4.chunk.js": "/structor/static/js/2.a3bef3d4.chunk.js",
+    "index.html": "/structor/index.html",
+    "static/js/2.a3bef3d4.chunk.js.LICENSE.txt": "/structor/static/js/2.a3bef3d4.chunk.js.LICENSE.txt",
+    "static/media/alert-circle-outline.2afd351d.svg": "/structor/static/media/alert-circle-outline.2afd351d.svg",
+    "static/media/arrow-undo-outline.e3d7c780.svg": "/structor/static/media/arrow-undo-outline.e3d7c780.svg",
+    "static/media/DatePicker.css": "/structor/static/media/time-outline.1dd63df0.svg",
+    "static/media/Select.css": "/structor/static/media/chevron-down-outline.6e2c90ee.svg",
+    "static/media/OptionReference.css": "/structor/static/media/close-outline.a22b61b1.svg",
+    "static/media/ItemButtons.css": "/structor/static/media/trash-outline.2bc810e4.svg",
+    "static/media/ellipsis-horizontal-outline.fbddf22c.svg": "/structor/static/media/ellipsis-horizontal-outline.fbddf22c.svg",
+    "static/media/AnchorMenu.css": "/structor/static/media/information-circle-outline.4d43fe5d.svg",
+    "static/media/styles.scss": "/structor/static/media/nav_arrow_down_black.709b5752.svg",
+    "static/media/AnswerOption.css": "/structor/static/media/reorder-three-outline.97d2b00a.svg",
+    "static/media/Typeahead.css": "/structor/static/media/search-outline.b350c0d8.svg",
+    "static/media/typography.module.scss": "/structor/static/media/source-sans-pro-900-black.9011cd90.woff2"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.16604858.js",
+    "static/css/2.9041ce6a.chunk.css",
+    "static/js/2.a3bef3d4.chunk.js",
+    "static/css/main.b4e3361f.chunk.css",
+    "static/js/main.07696c33.chunk.js"
+  ]
+}
