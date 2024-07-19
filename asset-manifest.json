@@ -1,12 +1,12 @@
 {
   "files": {
-    "main.css": "/structor/static/css/main.b4e3361f.chunk.css",
-    "main.js": "/structor/static/js/main.07696c33.chunk.js",
-    "runtime-main.js": "/structor/static/js/runtime-main.16604858.js",
-    "static/css/2.9041ce6a.chunk.css": "/structor/static/css/2.9041ce6a.chunk.css",
-    "static/js/2.a3bef3d4.chunk.js": "/structor/static/js/2.a3bef3d4.chunk.js",
+    "main.css": "/structor/static/css/main.18ec296c.chunk.css",
+    "main.js": "/structor/static/js/main.50219893.chunk.js",
+    "runtime-main.js": "/structor/static/js/runtime-main.0987f238.js",
+    "static/css/2.866fd3a5.chunk.css": "/structor/static/css/2.866fd3a5.chunk.css",
+    "static/js/2.61d55ad1.chunk.js": "/structor/static/js/2.61d55ad1.chunk.js",
     "index.html": "/structor/index.html",
-    "static/js/2.a3bef3d4.chunk.js.LICENSE.txt": "/structor/static/js/2.a3bef3d4.chunk.js.LICENSE.txt",
+    "static/js/2.61d55ad1.chunk.js.LICENSE.txt": "/structor/static/js/2.61d55ad1.chunk.js.LICENSE.txt",
     "static/media/alert-circle-outline.2afd351d.svg": "/structor/static/media/alert-circle-outline.2afd351d.svg",
     "static/media/arrow-undo-outline.e3d7c780.svg": "/structor/static/media/arrow-undo-outline.e3d7c780.svg",
     "static/media/DatePicker.css": "/structor/static/media/time-outline.1dd63df0.svg",
@@ -21,10 +21,10 @@
     "static/media/typography.module.scss": "/structor/static/media/source-sans-pro-900-black.9011cd90.woff2"
   },
   "entrypoints": [
-    "static/js/runtime-main.16604858.js",
-    "static/css/2.9041ce6a.chunk.css",
-    "static/js/2.a3bef3d4.chunk.js",
-    "static/css/main.b4e3361f.chunk.css",
-    "static/js/main.07696c33.chunk.js"
+    "static/js/runtime-main.0987f238.js",
+    "static/css/2.866fd3a5.chunk.css",
+    "static/js/2.61d55ad1.chunk.js",
+    "static/css/main.18ec296c.chunk.css",
+    "static/js/main.50219893.chunk.js"
   ]
 }
