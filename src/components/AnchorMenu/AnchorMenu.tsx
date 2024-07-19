@@ -11,7 +11,7 @@ import {
     moveItemAction,
     newItemAction,
     reorderItemAction,
-    selectMultipleNodesAction,
+    updateSelectedNodesAction,
 } from '../../store/treeStore/treeActions';
 import { ActionType, Items, MarkedItem, OrderItem, TreeContext } from '../../store/treeStore/treeStore';
 import { ValidationErrors } from '../../helpers/orphanValidation';
@@ -116,7 +116,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     }
 
     const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode: ExtendedNode) => {
-        dispatch(selectMultipleNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex, collapsedNodes))
+        dispatch(updateSelectedNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex, collapsedNodes))
     }
 
     const mapToTreeData = (item: OrderItem[], hierarchy: string, parentLinkId?: string): Node[] => {
@@ -183,7 +183,20 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
         );
     };
 
+    const isParentSelected = (
+        path: string[],
+    ): boolean => {
+        for (const pathString of path) {
+            // Check if any of the selectedNodes have a title that matches the pathString
+            if (selectedNodes.some(selectedNode => selectedNode.node.title === pathString)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
     const orderTreeData = mapToTreeData(props.qOrder, '');
+
     return (
         <DndProvider backend={HTML5Backend}>
             <div className="questionnaire-overview">
@@ -227,15 +240,22 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                             );
                         } else {
                             if (selectedNodes.length > 1 && selectedNodes.some(item => item.node.title === node.title)) {
+                                let count = 0;
                                 selectedNodes.map((item, i) => {
+                                    const isMovable = isParentSelected(item.path.slice(-2, -1))
+
+                                    if (!isMovable) {
+                                        return;
+                                    }
+
                                     const oldPath = treePathToOrderArray(item.path)
-                                    if (JSON.stringify(item.path) === JSON.stringify(newPath)) {
-                                        props.dispatch(reorderItemAction(item.node.title, newPath, moveIndex + i));
+                                    if (JSON.stringify(oldPath) === JSON.stringify(newPath)) {
+                                        props.dispatch(reorderItemAction(item.node.title, newPath, moveIndex + count));
 
                                     } else {
-                                        props.dispatch(moveItemAction(item.node.title, newPath, oldPath, moveIndex + i));
-
+                                        props.dispatch(moveItemAction(item.node.title, newPath, oldPath, moveIndex + count));
                                     }
+                                    count++;
                                 })
                                 setSelectedNodes([])
                             } else {
@@ -246,7 +266,6 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                                 } else {
                                     props.dispatch(moveItemAction(node.title, newPath, oldPath, moveIndex));
                                 }
-
                             }
                         }
                     }}
