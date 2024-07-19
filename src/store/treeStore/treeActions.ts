@@ -51,7 +51,7 @@ export const UPDATE_MARKED_LINK_ID = 'updateMarkedLinkId';
 export const UPDATE_VALUESET_ACTION = 'UPDATE_VALUESET';
 export const IMPORT_VALUESET_ACTION = 'IMPORT_VALUESET';
 export const SAVE_ACTION = 'save';
-export const SELECT_MULTIPLE_NODES_ACTION = 'selectMultipleNodes'
+export const UPDATE_SELECTED_NODES_ACTION = 'updateSelectedNodesAction'
 
 type ItemValueType =
     | string
@@ -142,8 +142,8 @@ export interface UpdateMetadataTranslationAction {
     translation: string;
 }
 
-export interface selectMultipleNodesAction {
-    type: typeof SELECT_MULTIPLE_NODES_ACTION;
+export interface updateSelectedNodesAction {
+    type: typeof UPDATE_SELECTED_NODES_ACTION;
     firstSelectedIndex: number[] | null;
     orderTreeData: Node[];
     selectedNodes: { node: Node, path: Array<string> }[];
@@ -375,9 +375,9 @@ export const updateSettingTranslationAction = (
     };
 };
 
-export const selectMultipleNodesAction = (firstSelectedIndex: number[] | null, orderTreeData: Node[], selectedNodes: { node: Node, path : Array<string>  }[], event: React.MouseEvent, node: Node, extendedNode : ExtendedNode, setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node, path : Array<string>  }[]>>, setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number[] | []>>, collapsedNodes : string[]) : selectMultipleNodesAction =>{
+export const updateSelectedNodesAction = (firstSelectedIndex: number[] | null, orderTreeData: Node[], selectedNodes: { node: Node, path : Array<string>  }[], event: React.MouseEvent, node: Node, extendedNode : ExtendedNode, setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node, path : Array<string>  }[]>>, setFirstSelectedIndex: React.Dispatch<React.SetStateAction<number[] | []>>, collapsedNodes : string[]) : updateSelectedNodesAction =>{
     return {
-        type : SELECT_MULTIPLE_NODES_ACTION,
+        type : UPDATE_SELECTED_NODES_ACTION,
         firstSelectedIndex,
         orderTreeData,
         selectedNodes,
