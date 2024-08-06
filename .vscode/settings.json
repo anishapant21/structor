@@ -12,8 +12,5 @@
   },
   "[xml]": {
     "editor.defaultFormatter": "redhat.vscode-xml"
-  },
-  "[css]": {
-    "editor.defaultFormatter": "vscode.css-language-features"
   }
 }

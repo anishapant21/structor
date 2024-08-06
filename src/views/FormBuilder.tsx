@@ -13,17 +13,9 @@ import TranslationModal from '../components/Languages/Translation/TranslationMod
 import FormFillerPreview from '../components/Refero/FormFillerPreview';
 
 import './FormBuilder.css';
-import { IQuestionnaireItemType } from '../types/IQuestionnareItemType';
 import DeleteConfirmation from '../components/MultiSelect/DeleteConfirmation';
 import { deleteItemAction } from '../store/treeStore/treeActions';
-
-interface Node {
-    title: string;
-    hierarchy?: string;
-    nodeType?: IQuestionnaireItemType;
-    nodeReadableType?: string;
-    children: Node[];
-}
+import { Node } from '../store/treeStore/treeActions';
 
 const FormBuilder = (): JSX.Element => {
     const { state, dispatch } = useContext(TreeContext);

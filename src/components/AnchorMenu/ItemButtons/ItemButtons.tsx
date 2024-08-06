@@ -6,15 +6,7 @@ import { QuestionnaireItem } from '../../../types/fhir';
 
 import './ItemButtons.css';
 import { deleteItemAction, duplicateItemAction, updateMarkedLinkIdAction } from '../../../store/treeStore/treeActions';
-import { IQuestionnaireItemType } from '../../../types/IQuestionnareItemType';
-
-interface Node {
-    title: string;
-    hierarchy?: string;
-    nodeType?: IQuestionnaireItemType;
-    nodeReadableType?: string;
-    children: Node[];
-}
+import { Node } from '../../../store/treeStore/treeActions';
 
 export const generateItemButtons = (
     t: TFunction<'translation'>,

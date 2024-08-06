@@ -17,17 +17,11 @@ import { ActionType, Items, MarkedItem, OrderItem, TreeContext } from '../../sto
 import { ValidationErrors } from '../../helpers/orphanValidation';
 import { isIgnorableItem } from '../../helpers/itemControl';
 import { canTypeHaveChildren, getInitialItemConfig } from '../../helpers/questionTypeFeatures';
+import addIcon from '../../images/icons/add-icon.svg';
+import { Node } from '../../store/treeStore/treeActions';
 
 import { generateItemButtons } from './ItemButtons/ItemButtons';
 import './AnchorMenu.css';
-
-interface Node {
-    title: string;
-    hierarchy?: string;
-    nodeType?: IQuestionnaireItemType;
-    nodeReadableType?: string;
-    children: Node[];
-}
 
 interface AnchorMenuProps {
     qOrder: OrderItem[];
@@ -86,9 +80,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     /* eslint-disable react/prop-types */
     const ExternalNodeBaseComponent = (props: { connectDragSource: ConnectDragSource; node: Node }): JSX.Element | null => {
         return props.connectDragSource(<div className="anchor-menu__dragcomponent">{props.node.nodeReadableType}  <div className='plus-icon' onClick={() => handleOnElementAdd(props.node)}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="#1a738e" className="bi bi-plus-circle-fill" viewBox="0 0 16 16">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z" />
-            </svg>
+            <img src={addIcon} alt="Add Icon" />
         </div></div>, {
             dropEffect: 'copy',
         });

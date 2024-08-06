@@ -1,4 +1,5 @@
 import React, { createContext, Dispatch, useEffect, useReducer } from 'react';
+import { getNodeAtPath } from '@nosferatu500/react-sortable-tree';
 import produce from 'immer';
 
 import { Extension, QuestionnaireItem, ValueSet } from '../../types/fhir';
@@ -70,7 +71,8 @@ import { isRecipientList } from '../../helpers/QuestionHelper';
 import { IExtentionType } from '../../types/IQuestionnareItemType';
 import { createVisibilityCoding, VisibilityType } from '../../helpers/globalVisibilityHelper';
 import { tjenesteomraadeCode, getTjenesteomraadeCoding } from '../../helpers/MetadataHelper';
-import { TreeItem, getNodeAtPath } from '@nosferatu500/react-sortable-tree';
+
+import { Node, ExtendedNode } from './treeActions';
 
 export type ActionType =
     | AddItemCodeAction
@@ -172,21 +174,6 @@ export interface MarkedItem {
 
 export interface TreeNodeKeyParams {
     treeIndex: number;
-}
-
-export interface Node {
-    linkId?: number,
-    title: string;
-    hierarchy?: string;
-    nodeType?: IQuestionnaireItemType;
-    nodeReadableType?: string;
-    children: Node[];
-}
-
-export interface ExtendedNode {
-    node: Node;
-    path: string[];
-    treeIndex?: number;
 }
 
 export interface TreeState {
