@@ -61,7 +61,7 @@ import {
 } from './treeActions';
 import { IQuestionnaireMetadata, IQuestionnaireMetadataType } from '../../types/IQuestionnaireMetadataType';
 import createUUID from '../../helpers/CreateUUID';
-import { IItemProperty, IQuestionnaireItemType } from '../../types/IQuestionnareItemType';
+import { IItemProperty } from '../../types/IQuestionnareItemType';
 import { INITIAL_LANGUAGE } from '../../helpers/LanguageHelper';
 import { isIgnorableItem } from '../../helpers/itemControl';
 import { createOptionReferenceExtensions } from '../../helpers/extensionHelper';
@@ -709,9 +709,9 @@ const pathToChild = (index: string, list: Node[], collapsedNodes: string[]): num
 const areAllChildrenNodesSelected = (
     currentNode: Node,
     parentNode: Node,
-    selectedNodes: { node: Node, path: Array<string> }[]
+    selectedNodes: { node: Node; path: Array<string> }[],
 ): boolean => {
-    const selectedTitles = new Set(selectedNodes.map(item => item.node.title));
+    const selectedTitles = new Set(selectedNodes.map((item) => item.node.title));
 
     const checkAllChildren = (node: Node): boolean => {
         if (!node.children || node.children.length === 0) {
@@ -730,7 +730,6 @@ const areAllChildrenNodesSelected = (
         return true;
     };
 
-
     selectedTitles.add(currentNode.title);
     return checkAllChildren(parentNode);
 };
@@ -739,9 +738,9 @@ const areAllChildrenNodesSelected = (
 const checkAndAddParentNodes = (
     extendedNode: ExtendedNode,
     orderTreeData: Node[],
-    selectedNodes: { node: Node, path: Array<string> }[],
-    collapsedNodes: string[]
-): { node: Node, path: Array<string> }[] => {
+    selectedNodes: { node: Node; path: Array<string> }[],
+    collapsedNodes: string[],
+): { node: Node; path: Array<string> }[] => {
     const path = extendedNode.path.slice(0, -1); // Remove the last element to get the parent path
     let currentPath = path;
     const allSelectedNodes = [...selectedNodes];
@@ -756,9 +755,7 @@ const checkAndAddParentNodes = (
         });
 
         if (result && result.node && areAllChildrenNodesSelected(extendedNode.node, result.node, allSelectedNodes)) {
-            const nodeExists = allSelectedNodes.some(
-                (item) => item.node.title === result.node.title
-            );
+            const nodeExists = allSelectedNodes.some((item) => item.node.title === result.node.title);
 
             if (!nodeExists) {
                 allSelectedNodes.push({ node: result.node, path: currentPath });
@@ -776,12 +773,10 @@ const checkAndAddParentNodes = (
 };
 
 // Returns the list of passed node and it's children until the maximum depth
-function recursiveAddNodes(node: Node, path: string[], selectedNodes: { node: Node; path: string[]; }[]) {
-    const nodes: { node: Node; path: string[]; }[] = [];
+function recursiveAddNodes(node: Node, path: string[], selectedNodes: { node: Node; path: string[] }[]) {
+    const nodes: { node: Node; path: string[] }[] = [];
     const addNodeIfNotExist = (node: Node, path: string[]) => {
-        const nodeExists = selectedNodes.some(
-            (item) => item.node.title === node.title
-        );
+        const nodeExists = selectedNodes.some((item) => item.node.title === node.title);
         if (!nodeExists) {
             nodes.push({ node, path });
             if (node.children) {
@@ -793,9 +788,9 @@ function recursiveAddNodes(node: Node, path: string[], selectedNodes: { node: No
     };
     addNodeIfNotExist(node, path);
     return nodes;
-};
+}
 
-const recursiveRemoveChildNodes = (node: Node, selectedNodes: { node: Node; path: string[]; }[]) => {
+const recursiveRemoveChildNodes = (node: Node, selectedNodes: { node: Node; path: string[] }[]) => {
     let nodes = [...selectedNodes];
 
     const removeNodeAndChildren = (node: Node) => {
@@ -813,9 +808,9 @@ const recursiveRemoveChildNodes = (node: Node, selectedNodes: { node: Node; path
 const checkAndRemoveParentNodes = (
     extendedNode: ExtendedNode,
     orderTreeData: Node[],
-    selectedNodes: { node: Node, path: Array<string> }[],
-    collapsedNodes: string[]
-): { node: Node, path: Array<string> }[] => {
+    selectedNodes: { node: Node; path: Array<string> }[],
+    collapsedNodes: string[],
+): { node: Node; path: Array<string> }[] => {
     const path = extendedNode.path.slice(0, -1); // Remove the last element to get the parent path
     let currentPath = path;
     let updatedSelectedNodes = [...selectedNodes]; // Copy the selectedNodes array
@@ -830,9 +825,7 @@ const checkAndRemoveParentNodes = (
         });
 
         if (result && result.node) {
-            updatedSelectedNodes = updatedSelectedNodes.filter(
-                (item) => item.node.title !== result.node.title
-            );
+            updatedSelectedNodes = updatedSelectedNodes.filter((item) => item.node.title !== result.node.title);
 
             // Move to the next parent
             currentPath = currentPath.slice(0, -1);
@@ -875,14 +868,14 @@ const findNodePath = (title: string, list: Node[]): string[] | null => {
 
 // Handle the selection of a single node
 function handleSingleSelect(
-    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node; path: string[]; }[]>>,
+    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node; path: string[] }[]>>,
     node: Node,
     extendedNode: ExtendedNode,
     orderTreeData: Node[],
     collapsedNodes: string[],
-    selectedNodes: { node: Node; path: string[]; }[]
+    selectedNodes: { node: Node; path: string[] }[],
 ) {
-    let newNodes: { node: Node; path: string[]; }[] = [];
+    let newNodes: { node: Node; path: string[] }[] = [];
 
     setSelectedNodes((prevSelectedNodes) => {
         const nodeExists = prevSelectedNodes.some((item) => item.node.title === node.title);
@@ -903,21 +896,25 @@ function handleSingleSelect(
 
     if (newNodes.length > 0) {
         // Add parent nodes if all children are selected
-        const updatedList = checkAndAddParentNodes(extendedNode, orderTreeData, [...newNodes, ...selectedNodes], collapsedNodes);
+        const updatedList = checkAndAddParentNodes(
+            extendedNode,
+            orderTreeData,
+            [...newNodes, ...selectedNodes],
+            collapsedNodes,
+        );
         setSelectedNodes(updatedList);
     }
 }
-
 
 // Select multiple nodes when the shift key is pressed
 function handleShiftSelect(
     pathToTheClickedNode: number[],
     firstSelectedIndex: number[] | null,
     orderTreeData: Node[],
-    selectedNodes: { node: Node; path: string[]; }[],
+    selectedNodes: { node: Node; path: string[] }[],
     extendedNode: ExtendedNode,
     collapsedNodes: string[],
-    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node; path: string[]; }[]>>
+    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node; path: string[] }[]>>,
 ) {
     if (!firstSelectedIndex) return;
 
@@ -935,8 +932,8 @@ function handleShiftSelect(
         endIndex -= 1;
     }
 
-    let newSelectedNodes: { node: Node; path: string[]; }[] = [];
-    const selectedTitles = new Set(selectedNodes.map(item => item.node.title));
+    let newSelectedNodes: { node: Node; path: string[] }[] = [];
+    const selectedTitles = new Set(selectedNodes.map((item) => item.node.title));
 
     for (let i = startIndex + 1; i <= endIndex; i++) {
         // TO-DO: The parent is considered to be the same, but what if we select different children in the end? Need to fix this.
@@ -955,18 +952,22 @@ function handleShiftSelect(
                 // Add the node and its children to the selection
                 const nodesToAdd = recursiveAddNodes(result.node, nodePath, selectedNodes);
                 newSelectedNodes.push(...nodesToAdd);
-                nodesToAdd.forEach(node => selectedTitles.add(node.node.title));
+                nodesToAdd.forEach((node) => selectedTitles.add(node.node.title));
             }
         }
     }
 
     // Add parent nodes if all children are selected
-    newSelectedNodes = checkAndAddParentNodes(extendedNode, orderTreeData, [...newSelectedNodes, ...selectedNodes], collapsedNodes);
+    newSelectedNodes = checkAndAddParentNodes(
+        extendedNode,
+        orderTreeData,
+        [...newSelectedNodes, ...selectedNodes],
+        collapsedNodes,
+    );
     setSelectedNodes(newSelectedNodes);
 }
 
-
-function updateSelectedNodes(draft: any, action: updateSelectedNodesAction): void {
+function updateSelectedNodes(draft: TreeState, action: updateSelectedNodesAction): void {
     const {
         event,
         firstSelectedIndex,
@@ -976,7 +977,7 @@ function updateSelectedNodes(draft: any, action: updateSelectedNodesAction): voi
         extendedNode,
         orderTreeData,
         node,
-        collapsedNodes
+        collapsedNodes,
     } = action;
 
     // Get the path to the node that was clicked
@@ -985,7 +986,15 @@ function updateSelectedNodes(draft: any, action: updateSelectedNodesAction): voi
 
     // Check if shift key is held and firstSelectedIndex is not null
     if (event.shiftKey && firstSelectedIndex !== null && treeIndex !== undefined) {
-        handleShiftSelect(pathToTheClickedNode, firstSelectedIndex, orderTreeData, selectedNodes, extendedNode, collapsedNodes, setSelectedNodes);
+        handleShiftSelect(
+            pathToTheClickedNode,
+            firstSelectedIndex,
+            orderTreeData,
+            selectedNodes,
+            extendedNode,
+            collapsedNodes,
+            setSelectedNodes,
+        );
     } else {
         handleSingleSelect(setSelectedNodes, node, extendedNode, orderTreeData, collapsedNodes, selectedNodes);
     }
@@ -1116,7 +1125,3 @@ export const TreeContextProvider = (props: { children: JSX.Element }): JSX.Eleme
         <TreeContext.Provider value={{ state, dispatch }}>{props.children}</TreeContext.Provider>
     );
 };
-
-
-
-

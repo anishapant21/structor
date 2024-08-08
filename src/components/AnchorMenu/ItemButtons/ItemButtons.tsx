@@ -14,8 +14,8 @@ export const generateItemButtons = (
     parentArray: Array<string>,
     showLabel: boolean,
     dispatch: React.Dispatch<ActionType>,
-    selectedNodes?: { node: Node, path: Array<string> }[],
-    setSelectedNodes?: React.Dispatch<React.SetStateAction<{ node: Node, path: Array<string> }[]>>
+    selectedNodes?: { node: Node; path: Array<string> }[],
+    setSelectedNodes?: React.Dispatch<React.SetStateAction<{ node: Node; path: Array<string> }[]>>,
 ): JSX.Element[] => {
     if (!item) {
         return [];
@@ -37,12 +37,7 @@ export const generateItemButtons = (
 
     const dispatchSettingsItem = (event: MouseEvent<HTMLButtonElement>): void => {
         event.stopPropagation();
-        dispatch(
-            updateMarkedLinkIdAction(
-                item.linkId,
-                parentArray
-            ),
-        );
+        dispatch(updateMarkedLinkIdAction(item.linkId, parentArray));
     };
 
     const getClassNames = () => {

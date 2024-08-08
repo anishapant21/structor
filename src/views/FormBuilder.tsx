@@ -26,8 +26,8 @@ const FormBuilder = (): JSX.Element => {
     const [translationErrors, setTranslationErrors] = useState<Array<ValidationErrors>>([]);
     const [translateLang, setTranslateLang] = useState('');
 
-    const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node, path: Array<string> }[]>([]);
-    const [isDeleteConfirmationModalVisible, setIsDeleteConfirmationModalVisible] = useState(false)
+    const [selectedNodes, setSelectedNodes] = React.useState<{ node: Node; path: Array<string> }[]>([]);
+    const [isDeleteConfirmationModalVisible, setIsDeleteConfirmationModalVisible] = useState(false);
 
     const toggleFormDetails = useCallback(() => {
         setShowFormDetails(!showFormDetails);
@@ -39,12 +39,10 @@ const FormBuilder = (): JSX.Element => {
         return newPath;
     };
 
-    const isParentSelected = (
-        path: string[],
-    ): boolean => {
+    const isParentSelected = (path: string[]): boolean => {
         for (const pathString of path) {
             // Check if any of the selectedNodes have a title that matches the pathString
-            if (selectedNodes.some(selectedNode => selectedNode.node.title === pathString)) {
+            if (selectedNodes.some((selectedNode) => selectedNode.node.title === pathString)) {
                 return false;
             }
         }
@@ -53,17 +51,17 @@ const FormBuilder = (): JSX.Element => {
 
     const handleOnMultipleDelete = () => {
         selectedNodes.map((item) => {
-            const isDeletable = isParentSelected(item.path.slice(-2, -1))
+            const isDeletable = isParentSelected(item.path.slice(-2, -1));
 
             if (!isDeletable) {
                 return;
             }
 
             dispatch(deleteItemAction(item.node.title, treePathToOrderArray(item.path)));
-        })
-        setSelectedNodes([])
-        setIsDeleteConfirmationModalVisible(false)
-    }
+        });
+        setSelectedNodes([]);
+        setIsDeleteConfirmationModalVisible(false);
+    };
 
     return (
         <>
@@ -74,15 +72,18 @@ const FormBuilder = (): JSX.Element => {
                 translationErrors={translationErrors}
                 setTranslationErrors={setTranslationErrors}
             />
-            {selectedNodes.length > 0 && <div className={`header-wrapper ${true ? "" : "d-none"}`}>
-                <div className='title'>
-                    <i className="cross-icon" onClick={() => setSelectedNodes([])} />
-                    <span className='items-selected'>{selectedNodes.length} selected</span>
+            {selectedNodes.length > 0 && (
+                <div className={`header-wrapper ${true ? '' : 'd-none'}`}>
+                    <div className="title">
+                        <i className="cross-icon" onClick={() => setSelectedNodes([])} />
+                        <span className="items-selected">{selectedNodes.length} selected</span>
+                    </div>
+                    <div className="delete-multiple p-2" onClick={() => setIsDeleteConfirmationModalVisible(true)}>
+                        <i className="delete-icon" />
+                        Delete
+                    </div>
                 </div>
-                <div className='delete-multiple p-2' onClick={() => setIsDeleteConfirmationModalVisible(true)}>
-                    <i className="delete-icon" />
-                    Delete</div>
-            </div>}
+            )}
             <div className="editor">
                 <AnchorMenu
                     dispatch={dispatch}
@@ -123,7 +124,11 @@ const FormBuilder = (): JSX.Element => {
                     isOpen={showFormDetails}
                 />
                 <QuestionDrawer validationErrors={validationErrors} />
-                <DeleteConfirmation isVisible={isDeleteConfirmationModalVisible} setIsDeleteConfirmationModalVisible={setIsDeleteConfirmationModalVisible} handleOnMultipleDelete={handleOnMultipleDelete} />
+                <DeleteConfirmation
+                    isVisible={isDeleteConfirmationModalVisible}
+                    setIsDeleteConfirmationModalVisible={setIsDeleteConfirmationModalVisible}
+                    handleOnMultipleDelete={handleOnMultipleDelete}
+                />
             </div>
         </>
     );

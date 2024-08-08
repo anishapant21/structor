@@ -1,4 +1,3 @@
-
 import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DndProvider, DragSource, DragSourceConnector, ConnectDragSource } from 'react-dnd';
@@ -29,8 +28,8 @@ interface AnchorMenuProps {
     qCurrentItem: MarkedItem | undefined;
     validationErrors: ValidationErrors[];
     dispatch: React.Dispatch<ActionType>;
-    selectedNodes: { node: Node, path: Array<string> }[];
-    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node, path: Array<string> }[]>>;
+    selectedNodes: { node: Node; path: Array<string> }[];
+    setSelectedNodes: React.Dispatch<React.SetStateAction<{ node: Node; path: Array<string> }[]>>;
 }
 
 interface ExtendedNode {
@@ -78,12 +77,21 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
     });
 
     /* eslint-disable react/prop-types */
-    const ExternalNodeBaseComponent = (props: { connectDragSource: ConnectDragSource; node: Node }): JSX.Element | null => {
-        return props.connectDragSource(<div className="anchor-menu__dragcomponent">{props.node.nodeReadableType}  <div className='plus-icon' onClick={() => handleOnElementAdd(props.node)}>
-            <img src={addIcon} alt="Add Icon" />
-        </div></div>, {
-            dropEffect: 'copy',
-        });
+    const ExternalNodeBaseComponent = (props: {
+        connectDragSource: ConnectDragSource;
+        node: Node;
+    }): JSX.Element | null => {
+        return props.connectDragSource(
+            <div className="anchor-menu__dragcomponent">
+                {props.node.nodeReadableType}{' '}
+                <div className="plus-icon" onClick={() => handleOnElementAdd(props.node)}>
+                    <img src={addIcon} alt="Add Icon" />
+                </div>
+            </div>,
+            {
+                dropEffect: 'copy',
+            },
+        );
     };
 
     /* eslint-enable react/prop-types */
@@ -95,21 +103,30 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
 
     const handleOnElementAdd = (node: Node) => {
         const moveIndex = orderTreeData.length;
-        const newPath: string[] = []
+        const newPath: string[] = [];
 
         if (node.nodeType) {
             props.dispatch(
-                newItemAction(
-                    getInitialItemConfig(node.nodeType, t('Recipient component')),
-                    newPath,
-                    moveIndex,
-                ))
+                newItemAction(getInitialItemConfig(node.nodeType, t('Recipient component')), newPath, moveIndex),
+            );
         }
-    }
+    };
 
     const handleOnNodeClick = (event: React.MouseEvent, node: Node, extendedNode: ExtendedNode) => {
-        dispatch(updateSelectedNodesAction(firstSelectedIndex, orderTreeData, selectedNodes, event, node, extendedNode, setSelectedNodes, setFirstSelectedIndex, collapsedNodes))
-    }
+        dispatch(
+            updateSelectedNodesAction(
+                firstSelectedIndex,
+                orderTreeData,
+                selectedNodes,
+                event,
+                node,
+                extendedNode,
+                setSelectedNodes,
+                setFirstSelectedIndex,
+                collapsedNodes,
+            ),
+        );
+    };
 
     const mapToTreeData = (item: OrderItem[], hierarchy: string, parentLinkId?: string): Node[] => {
         return item
@@ -146,10 +163,9 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
         return props.qCurrentItem?.linkId === linkId;
     };
 
-    const isNodeHighlighted = (node: any) => {
-        return selectedNodes.some(
-            (item) => item.node.title === node.title);
-    }
+    const isNodeHighlighted = (node: Node) => {
+        return selectedNodes.some((item) => item.node.title === node.title);
+    };
 
     const getRelevantIcon = (type?: string) => {
         switch (type) {
@@ -175,12 +191,10 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
         );
     };
 
-    const isParentSelected = (
-        path: string[],
-    ): boolean => {
+    const isParentSelected = (path: string[]): boolean => {
         for (const pathString of path) {
             // Check if any of the selectedNodes have a title that matches the pathString
-            if (selectedNodes.some(selectedNode => selectedNode.node.title === pathString)) {
+            if (selectedNodes.some((selectedNode) => selectedNode.node.title === pathString)) {
                 return false;
             }
         }
@@ -231,30 +245,33 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                                 ),
                             );
                         } else {
-                            if (selectedNodes.length > 1 && selectedNodes.some(item => item.node.title === node.title)) {
+                            if (
+                                selectedNodes.length > 1 &&
+                                selectedNodes.some((item) => item.node.title === node.title)
+                            ) {
                                 let count = 0;
-                                selectedNodes.map((item, i) => {
-                                    const isMovable = isParentSelected(item.path.slice(-2, -1))
+                                selectedNodes.map((item) => {
+                                    const isMovable = isParentSelected(item.path.slice(-2, -1));
 
                                     if (!isMovable) {
                                         return;
                                     }
 
-                                    const oldPath = treePathToOrderArray(item.path)
+                                    const oldPath = treePathToOrderArray(item.path);
                                     if (JSON.stringify(oldPath) === JSON.stringify(newPath)) {
                                         props.dispatch(reorderItemAction(item.node.title, newPath, moveIndex + count));
-
                                     } else {
-                                        props.dispatch(moveItemAction(item.node.title, newPath, oldPath, moveIndex + count));
+                                        props.dispatch(
+                                            moveItemAction(item.node.title, newPath, oldPath, moveIndex + count),
+                                        );
                                     }
                                     count++;
-                                })
-                                setSelectedNodes([])
+                                });
+                                setSelectedNodes([]);
                             } else {
                                 const oldPath = treePathToOrderArray(prevPath);
                                 if (JSON.stringify(newPath) === JSON.stringify(oldPath)) {
                                     props.dispatch(reorderItemAction(node.title, newPath, moveIndex));
-
                                 } else {
                                     props.dispatch(moveItemAction(node.title, newPath, oldPath, moveIndex));
                                 }
@@ -282,15 +299,13 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                                 clickedItemClassName !== 'rstcustom__expandButton' &&
                                 clickedItemClassName !== 'rst__collapseButton'
                             ) {
-
-                                handleOnNodeClick(event, extendedNode.node, extendedNode)
+                                handleOnNodeClick(event, extendedNode.node, extendedNode);
                             }
-
                         },
                         className: `anchor-menu__item 
                             ${hasValidationError(extendedNode.node.title) ? 'validation-error' : ''} 
                             ${extendedNode.path.length === 1 ? 'anchor-menu__topitem' : ''} 
-                            ${isNodeHighlighted(extendedNode.node) ? "selectedHighlight" : ""}
+                            ${isNodeHighlighted(extendedNode.node) ? 'selectedHighlight' : ''}
                             ${isSelectedItem(extendedNode.node.title) ? 'anchor-menu__item--selected' : ''}
                         `,
                         title: (
@@ -310,7 +325,7 @@ const AnchorMenu = (props: AnchorMenuProps): JSX.Element => {
                             false,
                             props.dispatch,
                             selectedNodes,
-                            setSelectedNodes
+                            setSelectedNodes,
                         ),
                     })}
                 />
